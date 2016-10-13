@@ -8,6 +8,7 @@ import os
 from app.load_data import load_sample_input
 from app.heatmap import heatmap
 from app.predictor import predict
+from app.heatmap_side import heatmap_side
 
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY
 
@@ -40,3 +41,6 @@ if __name__ == "__main__":
             heatmap()
         elif args[1] == "predict":
             predict()
+        elif args[1] == "heatmap_side":
+            heatmap_side()
+
