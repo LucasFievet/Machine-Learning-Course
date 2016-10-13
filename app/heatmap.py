@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 
-from .load_data import load_data
+from .load_data import load_sample_input
 
 
 __author__ = "lfievet"
@@ -20,16 +20,31 @@ __status__ = "Production"
 
 
 def heatmap():
-    data = load_data()
+    sample = 10
+    data = load_sample_input(sample)
 
-    for i in range(0, 176):
+    # flat_data = data.get_data().flatten()
+    # flat_data = flat_data[flat_data > 100]
+    #
+    # plt.hist(flat_data, 50, normed=1, facecolor='green', alpha=0.75)
+    # plt.xlabel('Smarts')
+    # plt.ylabel('Probability')
+    # plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=100,\ \sigma=15$')
+    # # plt.axis([40, 160, 0, 0.03])
+    # plt.grid(True)
+    # plt.savefig("plots/hist{}.pdf".format(sample))
+    #
+    # # print(flat_data)
+    # return
+
+    for i in range(60, 150):
         heat_map = data.get_data()[:, :, i, 0]
-        print(heat_map)
-        print(heat_map.shape)
+        # print(heat_map)
+        # print(heat_map.shape)
         # heatmap.reshape((176, 208))
         # print(heatmap.shape)
         sum = np.sum(heat_map)
-        print(sum)
+        # print(sum)
 
         if sum == 0:
             continue

@@ -2,10 +2,14 @@
 
 
 import sys
+import os
 
 
-from app.load_data import load_data
+from app.load_data import load_sample_input
 from app.heatmap import heatmap
+from app.predictor import predict
+
+from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY
 
 
 __author__ = "lfievet"
@@ -20,11 +24,19 @@ __status__ = "Production"
 
 
 if __name__ == "__main__":
+    if not os.path.exists(CACHE_DIRECTORY):
+        os.makedirs(CACHE_DIRECTORY)
+
+    if not os.path.exists(PLOT_DIRECTORY):
+        os.makedirs(PLOT_DIRECTORY)
+
     args = sys.argv
     if len(args) < 2:
         print("You need to specify a function")
     else:
         if args[1] == "load":
-            print(load_data())
+            print(load_sample_input())
         elif args[1] == "heatmap":
             heatmap()
+        elif args[1] == "predict":
+            predict()

@@ -3,6 +3,7 @@
 import os
 
 import nibabel as ni
+import pandas as pd
 
 from .settings import DATA_DIRECTORY
 
@@ -17,9 +18,30 @@ __date__ = "12/10/2016"
 __status__ = "Production"
 
 
-def load_data(training=True):
-    file_path = os.path.join(DATA_DIRECTORY, "set_train", "train_1.nii")
-    data = ni.load(file_path)
+def load_samples_inputs(training=True):
+    inputs = []
+    for i in range(1, 279):
+        inputs.append(load_sample_input(i))
 
-    # print(data)
-    return data
+    return inputs
+
+
+def load_sample_input(id=1, training=True):
+    file_path = os.path.join(
+        DATA_DIRECTORY,
+        "set_train",
+        "train_{}.nii".format(id)
+    )
+    return ni.load(file_path)
+
+
+def load_targets(training=True):
+    targets_path = os.path.join(
+        DATA_DIRECTORY,
+        "targets.csv"
+    )
+    return pd.read_csv(
+        targets_path,
+        header=None,
+        names=["Y"]
+    )
