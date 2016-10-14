@@ -19,8 +19,14 @@ __status__ = "Production"
 
 
 def load_samples_inputs(training=True):
+    DIR = os.path.join(
+        DATA_DIRECTORY,
+        "set_train"
+        )
+    files = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
+
     inputs = []
-    for i in range(1, 279):
+    for i in range(1, files+1):
         inputs.append(load_sample_input(i))
 
     return inputs

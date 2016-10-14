@@ -34,7 +34,9 @@ def predict_test(training=True):
     data.to_hdf(cache_path, "table")
 
     print(data)
-    xs = data[["mean", "ratio_mean", "max"]].values.tolist()
+    feature_list = data.keys().tolist()
+    feature_list.remove("Y")
+    xs = data[feature_list].values.tolist()
     ys = data["Y"].values.tolist()
     nn = KNeighborsRegressor(
         n_neighbors=4,
@@ -47,7 +49,18 @@ def predict_test(training=True):
 
 
 def load_features():
-    inputs = load_samples_inputs()
+    inputs = [
+        {
+            "area": "whole",
+            "val": load_samples_inputs()
+        }
+    ]
+    inputs.append(
+        {
+            "area": "fl",
+            "val": cut_frontal_lobe(inputs[0]["val"])
+        }
+        )
     data = load_targets()
 
     features = [
@@ -66,16 +79,17 @@ def load_features():
     ]
 
     for f in features:
-        feature_inputs = f["f"](inputs)
-        data[f["name"]] = feature_inputs
+        for i in inputs:
+            feature_inputs = f["f"](i["val"])
+            data["{}_{}".format(f["name"], i["area"])] = feature_inputs
 
-        plt.figure()
-        plt.scatter(
-            feature_inputs,
-            data["Y"].tolist(),
-        )
-        plt.savefig("plots/line_{}.pdf".format(
-            f["name"]
-        ))
+            plt.figure()
+            plt.scatter(
+                feature_inputs,
+                data["Y"].tolist(),
+            )
+            plt.savefig("plots/line_{}_{}.pdf".format(
+                f["name"], i["area"]
+            ))
 
     return data

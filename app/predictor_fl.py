@@ -16,7 +16,7 @@ from sklearn.cross_validation import cross_val_predict
 from sklearn.metrics import accuracy_score
 
 from .settings import CURRENT_DIRECTORY
-from .cut_frontal_lobe import cut_frontal_lobe
+from .cut_frontal_lobe_old import cut_frontal_lobe
 
 __author__ = "lfievet"
 __copyright__ = "Copyright 2016, Project One"
