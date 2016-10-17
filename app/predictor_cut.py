@@ -39,10 +39,12 @@ def predict_cut(training=True):
     print(data)
     feature_list = data.keys().tolist()
     feature_list.remove("Y")
+    #feature_list = ["max_lb", "max_mb", "mean_mb", "mean_rt", "mean_mt", "ratio_mean_lt",
+    #        "ratio_mean_mb", "ratio_mean_mt", "ratio_mean_rt", "ratio_mean_whole"]
     xs = data[feature_list].values.tolist()
     ys = data["Y"].values.tolist()
     nn = KNeighborsRegressor(
-        n_neighbors=4,
+        n_neighbors=3,
         weights="uniform",
         p=2,
         n_jobs=-1,

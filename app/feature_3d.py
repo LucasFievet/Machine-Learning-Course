@@ -3,6 +3,7 @@
 import numpy as np
 
 from .load_data import load_samples_inputs
+from .normalize import normalize
 
 __author__ = "lfievet"
 __copyright__ = "Copyright 2016, Project One"
@@ -26,6 +27,8 @@ def feature_ratio_mean(inputs):
         ratio = np.sum(high)/np.sum(low)
 
         fs.append(ratio)
+
+    fs = normalize(fs)
     return fs
 
 def feature_mean(inputs):
@@ -35,6 +38,7 @@ def feature_mean(inputs):
     for i in inputs:
         fs.append(np.mean(i))
 
+    fs = normalize(fs)
     return fs
 
 
@@ -51,6 +55,7 @@ def feature_ratio(inputs):
 
         fs.append(ratio)
 
+    fs = normalize(fs)
     return fs
 
 
@@ -65,6 +70,7 @@ def feature_max(inputs):
 
         fs.append(x_max)
 
+    fs = normalize(fs)
     return fs
 
 
