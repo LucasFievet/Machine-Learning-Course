@@ -11,4 +11,5 @@ def squared_error(ys, yp):
     plt.scatter(range(0,len(data[:,1])),data[:,1],color="blue")
     plt.grid()
     plt.savefig("plots/error.pdf")
+    plt.close()
     return se
