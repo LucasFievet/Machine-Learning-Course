@@ -8,8 +8,6 @@ import os
 from app.load_data import load_sample_input
 from app.heatmap import heatmap
 from app.predictor import predict
-from app.predictor_fl import predict_fl
-from app.predictor_test import predict_test
 from app.predictor_cut import predict_cut
 from app.heatmap_side import heatmap_side
 
@@ -46,10 +44,6 @@ if __name__ == "__main__":
             predict()
         elif args[1] == "heatmap_side":
             heatmap_side()
-        elif args[1] == "predict_fl":
-            predict_fl()
-        elif args[1] == "predict_test":
-            predict_test()
         elif args[1] == "predict_cut":
             predict_cut()
 

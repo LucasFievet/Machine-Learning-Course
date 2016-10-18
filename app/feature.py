@@ -2,18 +2,7 @@
 
 import numpy as np
 
-from .load_data import load_samples_inputs
 from .normalize import normalize
-
-__author__ = "lfievet"
-__copyright__ = "Copyright 2016, Project One"
-__credits__ = ["lfievet"]
-__license__ = "No License"
-__version__ = "1.0"
-__maintainer__ = "lfievet"
-__email__ = "lfievet@ethz.ch"
-__date__ = "12/10/2016"
-__status__ = "Production"
 
 def feature_ratio_mean(inputs):
     inputs = get_flat_values(inputs)
@@ -75,9 +64,6 @@ def feature_max(inputs):
 
 
 def get_flat_values(inputs):
-#    if inputs is None:
-#       inputs = load_samples_inputs()
-
     values = []
     for i in inputs:
         vs = i.flatten()

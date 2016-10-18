@@ -1,6 +1,5 @@
 """Description of this file."""
 
-
 import os
 
 import matplotlib.pyplot as plt
@@ -8,16 +7,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-from .feature_3d import feature_mean, feature_ratio, feature_max, feature_ratio_mean
-from .load_data_3d import load_targets, load_samples_inputs
-from .squared_error import squared_error
-
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.cross_validation import cross_val_predict
 from sklearn.metrics import accuracy_score
 
 from .settings import CURRENT_DIRECTORY
 from .cut_brain import cut_brain
+from .feature import feature_mean, feature_max, feature_ratio_mean
+from .load_data_3d import load_targets, load_samples_inputs
+from .squared_error import squared_error
+
 
 def predict_cut(training=True):
     cache_path = os.path.join(
@@ -37,10 +36,10 @@ def predict_cut(training=True):
     data.to_hdf(cache_path, "table")
 
     print(data)
-    feature_list = data.keys().tolist()
-    feature_list.remove("Y")
-    #feature_list = ["max_lb", "max_mb", "mean_mb", "mean_rt", "mean_mt", "ratio_mean_lt",
-    #        "ratio_mean_mb", "ratio_mean_mt", "ratio_mean_rt", "ratio_mean_whole"]
+    #feature_list = data.keys().tolist()
+    #feature_list.remove("Y")
+    feature_list = ["max_lb", "max_mb", "mean_mb", "mean_rt", "mean_mt", "mean_whole", "ratio_mean_lt",
+            "ratio_mean_mb", "ratio_mean_mt", "ratio_mean_rt", "ratio_mean_whole"]
     xs = data[feature_list].values.tolist()
     ys = data["Y"].values.tolist()
     nn = KNeighborsRegressor(
