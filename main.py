@@ -37,7 +37,7 @@ if __name__ == "__main__":
         elif args[1] == "predict_cut":
             predict_cut()
         elif args[1] == "predict_cut_iterate":
-            if len(args < 3):
+            if len(args) < 3:
                 print("Additional Argument needed for this!")
             else:
                 predict_cut_iterate(num=int(args[2]))
