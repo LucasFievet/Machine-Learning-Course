@@ -64,7 +64,7 @@ def predict_cut_iterate(num, training=True):
 
     se.sort(key=lambda x: x[0])
     print(se[0])
-    iterate_path = os.path.join(ITERATE_DIRECTORY,"se_{}.hdf".format(files))
+    iterate_path = os.path.join(ITERATE_DIRECTORY,"se_{}.hdf".format(num))
     pd.Series(se[0:10]).to_hdf(iterate_path, "table")
 
 
