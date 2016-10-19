@@ -15,7 +15,7 @@ do
 		then
 			bsub -J job_chain_$num -n 1 -R "rusage[mem=$memory]" "python3 main.py predict_cut_iterate $num"
 		else
-			numlj=$(expr ($i - 1) * 40 + $j)
+			numlj=$(expr ($i - 1) \* 40 + $j)
 			bsub -J job_chain_$num -w "done(job_chain_$numlj)" -R -n 1 "rusage[mem=$memory]" "python3 main.py predict_cut_iterate $num"
 		fi
 		echo $num
