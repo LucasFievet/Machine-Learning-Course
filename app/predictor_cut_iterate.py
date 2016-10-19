@@ -31,9 +31,9 @@ def predict_cut_iterate(num, training=True):
     else:
         print("Loading features")
         data = load_features()
-
-    print("saving data to cache")
-    data.to_hdf(cache_path, "table")
+	print("saving data to cache")
+	data.to_hdf(cache_path, "table")
+    
 
     #print(data)
     feature_list = data.keys().tolist()
@@ -49,7 +49,7 @@ def predict_cut_iterate(num, training=True):
 
     DIR = ITERATE_DIRECTORY
     #files = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
-    steps = 100000
+    steps = 1000
     start = num * steps
     end = start + steps
     if end > len(feature_subsets):
