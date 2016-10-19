@@ -10,7 +10,7 @@ from app.predictor_cut import predict_cut
 from app.predictor_cut_iterate import predict_cut_iterate
 from app.heatmap_side import heatmap_side
 
-from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY
+from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
 if __name__ == "__main__":
     if not os.path.exists(CACHE_DIRECTORY):
@@ -18,6 +18,9 @@ if __name__ == "__main__":
 
     if not os.path.exists(PLOT_DIRECTORY):
         os.makedirs(PLOT_DIRECTORY)
+
+    if not os.path.exists(ITERATE_DIRECTORY):
+        os.makedirs(ITERATE_DIRECTORY)
 
     args = sys.argv
     if len(args) < 2:

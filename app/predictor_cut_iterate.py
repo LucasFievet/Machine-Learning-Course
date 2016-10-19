@@ -11,7 +11,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.cross_validation import cross_val_predict
 from sklearn.metrics import accuracy_score
 
-from .settings import CURRENT_DIRECTORY
+from .settings import CURRENT_DIRECTORY, ITERATE_DIRECTORY
 from .cut_brain import cut_brain
 from .feature import feature_mean, feature_max, feature_ratio_mean
 from .load_data_3d import load_targets, load_samples_inputs
@@ -47,16 +47,24 @@ def predict_cut_iterate(training=True):
         n_jobs=-1,
     )
 
+    DIR = ITERATE_DIRECTORY
+    files = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
+    steps = 100000
+    end = files + steps
+    if end > len(feature_subsets):
+        end = len(feature_subsets)
     se = []
-
+    print(len(feature_subsets))
     print("Starting Predictions")
-    for subset in feature_subsets:
+    for subset in feature_subsets[files:end]:
         xs = data[subset].values.tolist()
         predicted = cross_val_predict(nn, xs, ys, cv=5)
         se.append([squared_error(ys,predicted),subset])
 
     se.sort(key=lambda x: x[0])
-    print(se[0:10])
+    print(se[0])
+    iterate_path = os.path.join(ITERATE_DIRECTORY,"se_{}.hdf".format(files))
+    pd.Series(se[0:10]).to_hdf(iterate_path, "table")
 
 
 def load_features():
