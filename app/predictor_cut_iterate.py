@@ -18,7 +18,7 @@ from .load_data_3d import load_targets, load_samples_inputs
 from .squared_error import squared_error
 from .subset_generator import all_subsets
 
-def predict_cut_iterate(training=True):
+def predict_cut_iterate(num, training=True):
     cache_path = os.path.join(
         CURRENT_DIRECTORY,
         "..",
@@ -48,15 +48,16 @@ def predict_cut_iterate(training=True):
     )
 
     DIR = ITERATE_DIRECTORY
-    files = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
+    #files = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
     steps = 100000
-    end = files + steps
+    start = num * steps
+    end = start + steps
     if end > len(feature_subsets):
         end = len(feature_subsets)
     se = []
     print(len(feature_subsets))
     print("Starting Predictions")
-    for subset in feature_subsets[files:end]:
+    for subset in feature_subsets[start:end]:
         xs = data[subset].values.tolist()
         predicted = cross_val_predict(nn, xs, ys, cv=5)
         se.append([squared_error(ys,predicted),subset])
