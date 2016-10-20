@@ -35,11 +35,10 @@ def predict_cut(training=True):
     print("saving data to cache")
     data.to_hdf(cache_path, "table")
 
-    print(data)
+    #print(data)
     #feature_list = data.keys().tolist()
     #feature_list.remove("Y")
-    feature_list = ["max_lb", "max_mb", "mean_mb", "mean_rt", "mean_mt", "mean_whole", "ratio_mean_lt",
-            "ratio_mean_mb", "ratio_mean_mt", "ratio_mean_rt", "ratio_mean_whole"]
+    feature_list = ['mean_rt', 'mean_mb', 'ratio_mean_lt', 'ratio_mean_rt', 'ratio_mean_rb', 'max_rt', 'max_rb']
     xs = data[feature_list].values.tolist()
     ys = data["Y"].values.tolist()
     nn = KNeighborsRegressor(
