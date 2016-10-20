@@ -52,7 +52,7 @@ def predict_cut(training=True):
         print("Loading test features")
         test_data = load_features(norms)
         print("saving test to cache")
-        pd.DataFrame.from_dict(test_data).to_hdf(cache_data_path, "table")
+        pd.DataFrame.from_dict(test_data).to_hdf(cache_test_path, "table")
 
     feature_list = ['mean_rt', 'mean_mb', 'ratio_mean_lt', 'ratio_mean_rt', 'ratio_mean_rb', 'max_rt', 'max_rb']
     xs = data[feature_list].values.tolist()
