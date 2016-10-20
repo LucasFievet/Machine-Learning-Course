@@ -57,7 +57,14 @@ def predict_cut(training=True):
     feature_list = ['mean_rt', 'mean_mb', 'ratio_mean_lt', 'ratio_mean_rt', 'ratio_mean_rb', 'max_rt', 'max_rb']
     xs = data[feature_list].values.tolist()
     ys = data["Y"].values.tolist()
-    test_input = test_data[feature_list].values().tolist()
+
+    test_inputs = []
+    for i in range(0,len(test_data['mean_rt'])):
+        test_input = [] 
+        for f in feature_list:
+            test_input.append(list(test_data[f].values())[i])
+        test_inputs.append(test_input)
+
     nn = KNeighborsRegressor(
         n_neighbors=3,
         weights="uniform",
@@ -70,12 +77,12 @@ def predict_cut(training=True):
 
     nn.fit(xs, ys)
 
-    result = nn.predict(test_input)
+    result = nn.predict(test_inputs)
     print(result)
     result_path = os.path.join(
         CURRENT_DIRECTORY,
         "..",
         "result.csv"
     )
-    result.to_csv(result_path)
+    pd.Series(result).to_csv(result_path)
 
