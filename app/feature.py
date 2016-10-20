@@ -4,6 +4,7 @@ import numpy as np
 
 from .normalize import normalize
 
+
 def feature_ratio_mean(inputs):
     inputs = get_flat_values(inputs)
 

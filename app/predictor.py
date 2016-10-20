@@ -13,7 +13,7 @@ from .load_data import load_targets, load_samples_inputs
 
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.cross_validation import cross_val_predict
-from sklearn.metrics import accuracy_score
+from sklearn.linear_model import Perceptron
 
 from .settings import CURRENT_DIRECTORY
 
@@ -43,18 +43,47 @@ def predict(training=True):
 
     data.to_hdf(cache_path, "table")
 
-    print(data)
-    xs = data[["mean", "max"]].values.tolist()
-    ys = data["Y"].values.tolist()
+    # data = data[data["max"] > 600]
+    # data = data[data["max"] < 1000]
 
-    nn = KNeighborsRegressor(
-        n_neighbors=4,
-        weights="uniform",
-        p=2,
-    )
-    predicted = cross_val_predict(nn, xs, ys, cv=5)
-    diffs = ys - predicted
-    print(np.mean(abs(diffs)))
+    # data = data[data["max"] > 0]
+
+    print(data)
+
+    min = 1000
+    for i in range(0, 6):
+        for j in range(i+1, 6):
+            for k in range(1, 10):
+                xs = data[[i, j]].values.tolist()
+                ys = data["Y"].values.tolist()
+
+                nn = KNeighborsRegressor(
+                    n_neighbors=k,
+                    weights="uniform",
+                    p=2,
+                )
+                # model = Perceptron()
+                predicted = cross_val_predict(nn, xs, ys, cv=5)
+                diffs = predicted - ys
+                # print(diffs)
+                mean_squared_error = np.mean(list(map(lambda x: x*x, diffs)))
+
+                if mean_squared_error > min:
+                    continue
+
+                min = mean_squared_error
+                print("-"*50)
+                print(i)
+                print(j)
+                print(mean_squared_error)
+                print(np.std(diffs))
+
+                plt.figure()
+                plt.scatter(
+                    ys,
+                    diffs,
+                )
+                plt.savefig("plots/diffs.pdf")
 
 
 def load_features():
@@ -62,14 +91,14 @@ def load_features():
     data = load_targets()
 
     features = [
-        {
-            "name": "mean",
-            "f": feature_mean
-        },
-        {
-            "name": "ratio",
-            "f": feature_ratio
-        },
+        # {
+        #     "name": "mean",
+        #     "f": feature_mean
+        # },
+        # {
+        #     "name": "ratio",
+        #     "f": feature_ratio
+        # },
         {
             "name": "max",
             "f": feature_max
@@ -78,15 +107,24 @@ def load_features():
 
     for f in features:
         feature_inputs = f["f"](inputs)
-        data[f["name"]] = feature_inputs
+        # data[f["name"]] = feature_inputs
+        data = pd.concat([data, feature_inputs], axis=1)
+        data.dropna(inplace=True)
+        print(data)
 
-        plt.figure()
-        plt.scatter(
-            feature_inputs,
-            data["Y"].tolist(),
-        )
-        plt.savefig("plots/line_{}.pdf".format(
-            f["name"]
-        ))
+        for i in range(0, 6):
+            plt.figure()
+            df = data[abs(data[i]) > 0]
+            xs = df[i].tolist()
+            plt.scatter(
+                xs,
+                df["Y"].tolist(),
+
+            )
+            # plt.xlim(-min(xs),  max(xs))
+            plt.savefig("plots/line-{}-{}.pdf".format(
+                f["name"],
+                i
+            ))
 
     return data

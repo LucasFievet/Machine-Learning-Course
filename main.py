@@ -6,6 +6,7 @@ import os
 from app.load_data import load_sample_input
 from app.heatmap import heatmap
 from app.predictor import predict
+from app.predictor_cluster import predict_cluster
 from app.predictor_cut import predict_cut
 from app.predictor_cut_iterate import predict_cut_iterate
 from app.heatmap_side import heatmap_side
@@ -36,6 +37,8 @@ if __name__ == "__main__":
             heatmap_side()
         elif args[1] == "predict_cut":
             predict_cut()
+        elif args[1] == "predict_cluster":
+            predict_cluster()
         elif args[1] == "predict_cut_iterate":
             if len(args) < 3:
                 print("Additional Argument needed for this!")
