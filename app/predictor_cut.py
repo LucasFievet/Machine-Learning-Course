@@ -40,7 +40,7 @@ def predict_cut(training=True):
         norms = pd.read_hdf(cache_norms_path, "table").to_dict()
     else:
         print("Loading features")
-        data, norms= load_features()
+        data, norms = load_features()
         print("saving data to cache")
         data.to_hdf(cache_data_path, "table")
         pd.DataFrame.from_dict(norms).to_hdf(cache_norms_path, "table")
