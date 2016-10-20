@@ -37,7 +37,7 @@ def predict_cut(training=True):
     if os.path.exists(cache_data_path) and os.path.exists(cache_norms_path):
         print("Loading features from cache")
         data = pd.read_hdf(cache_data_path, "table")
-        norms = pd.read_hdf(cache_norms_path, "table").DataFrame.to_dict()
+        norms = pd.read_hdf(cache_norms_path, "table").to_dict()
     else:
         print("Loading features")
         data, norms= load_features()
