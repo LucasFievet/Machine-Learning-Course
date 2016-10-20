@@ -16,31 +16,51 @@ from .cut_brain import cut_brain
 from .feature import feature_mean, feature_max, feature_ratio_mean
 from .load_data_3d import load_targets, load_samples_inputs
 from .squared_error import squared_error
-
+from .load_features import load_features
 
 def predict_cut(training=True):
-    cache_path = os.path.join(
+    cache_data_path = os.path.join(
         CURRENT_DIRECTORY,
         "..",
         "cache",
-        "trial1.hdf"
+        "data.hdf"
     )
-    if os.path.exists(cache_path):
+    cache_norms_path = os.path.join(
+        CURRENT_DIRECTORY,
+        "..",
+        "cache",
+        "norms.hdf"
+    )
+    cache_test_path = os.path.join(
+        CURRENT_DIRECTORY,
+        "..",
+        "cache",
+        "test.hdf"
+    )
+    if os.path.exists(cache_data_path):
         print("Loading features from cache")
-        data = pd.read_hdf(cache_path, "table")
+        data = pd.read_hdf(cache_data_path, "table")
+        norms = pd.read_hdf(cache_norms_path, "table")
     else:
         print("Loading features")
-        data = load_features()
+        data, norms= load_features()
+        print("saving data to cache")
+        data.to_hdf(cache_data_path, "table")
+        norms.to_hdf(cache_norms_path, "table")
 
-    print("saving data to cache")
-    data.to_hdf(cache_path, "table")
+    if os.path.exists(cache_test_path):
+        print("Loading test features from cache")
+        test_data = pd.read_hdf(cache_test_path, "table")
+    else:
+        print("Loading test features")
+        test_data = load_features(norms)
+        print("saving test to cache")
+        test_data.to_hdf(cache_data_path, "table")
 
-    #print(data)
-    #feature_list = data.keys().tolist()
-    #feature_list.remove("Y")
     feature_list = ['mean_rt', 'mean_mb', 'ratio_mean_lt', 'ratio_mean_rt', 'ratio_mean_rb', 'max_rt', 'max_rb']
     xs = data[feature_list].values.tolist()
     ys = data["Y"].values.tolist()
+    test_input = test_data[feature_list].values.tolist()
     nn = KNeighborsRegressor(
         n_neighbors=3,
         weights="uniform",
@@ -51,53 +71,14 @@ def predict_cut(training=True):
     predicted = cross_val_predict(nn, xs, ys, cv=5)
     print("Squared Error:",squared_error(ys,predicted))
 
+    nn.fit(xs, ys)
 
-def load_features():
-    areas = ["lt","mt","rt","lb","mb","rb"]
-    inputs = [
-        {
-            "area": "whole",
-            "val": load_samples_inputs()
-        }
-    ]
-    for a in areas:
-        inputs.append(
-            {
-                "area": a,
-                "val": cut_brain(inputs[0]["val"], a)
-            }
-            )
-    data = load_targets()
+    result = nn.predict(test_input)
+    print(result)
+    result_path = os.path.join(
+        CURRENT_DIRECTORY,
+        "..",
+        "result.csv"
+    )
+    result.to_csv(result_path)
 
-    features = [
-        {
-            "name": "mean",
-            "f": feature_mean
-        },
-        {
-            "name": "ratio_mean",
-            "f": feature_ratio_mean
-        },
-        {
-            "name": "max",
-            "f": feature_max
-        },
-    ]
-
-    print("plotting features")
-    for f in features:
-        for i in inputs:
-            feature_inputs = f["f"](i["val"])
-            data["{}_{}".format(f["name"], i["area"])] = feature_inputs
-
-            plt.figure()
-            plt.scatter(
-                feature_inputs,
-                data["Y"].tolist(),
-            )
-            plt.savefig("plots/line_{}_{}.pdf".format(
-                f["name"], i["area"]
-            ))
-            plt.close()
-
-    return data

@@ -8,24 +8,36 @@ import pandas as pd
 from .settings import DATA_DIRECTORY
 
 def load_samples_inputs(training=True):
+    if training == True:
+        folder = "set_train"
+    else:
+        folder = "set_test"
+
     DIR = os.path.join(
         DATA_DIRECTORY,
-        "set_train"
+        folder
         )
     files = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
 
     inputs = []
     for i in range(1, files+1):
-        inputs.append(load_sample_input(i))
+        inputs.append(load_sample_input(i, training))
 
     return inputs
 
 
 def load_sample_input(id=1, training=True):
+    if training == True:
+        folder = "set_train"
+        files = "train"
+    else:
+        folder = "set_test"
+        files = "test"
+
     file_path = os.path.join(
         DATA_DIRECTORY,
-        "set_train",
-        "train_{}.nii".format(id)
+        folder,
+        "{}_{}.nii".format(files,id)
     )
     return ni.load(file_path).get_data()[:,:,:,0]
 
