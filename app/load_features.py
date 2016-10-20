@@ -1,3 +1,7 @@
+from .load_data_3d import load_targets, load_samples_inputs
+from .cut_brain import cut_brain
+from .feature import feature_mean, feature_max, feature_ratio_mean
+
 def load_features(norms=None):
     if norms == None:
         training = True

@@ -12,9 +12,6 @@ from sklearn.cross_validation import cross_val_predict
 from sklearn.metrics import accuracy_score
 
 from .settings import CURRENT_DIRECTORY
-from .cut_brain import cut_brain
-from .feature import feature_mean, feature_max, feature_ratio_mean
-from .load_data_3d import load_targets, load_samples_inputs
 from .squared_error import squared_error
 from .load_features import load_features
 
