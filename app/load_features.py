@@ -37,7 +37,7 @@ def load_features(norms=None):
         },
     ]
     if norms == None:
-        norms = []
+        norms = {}
         data = load_targets()
         print("plotting features")
         for f in features:
@@ -55,7 +55,7 @@ def load_features(norms=None):
                # plt.close()
         return data, norms
     else:
-        data = [] 
+        data = {} 
         for f in features:
             for i in inputs:
                 feature_inputs = f["f"](i["val"], norms["{}_{}".format(f["name"], i["area"])])
