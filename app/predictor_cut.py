@@ -47,12 +47,12 @@ def predict_cut(training=True):
 
     if os.path.exists(cache_test_path):
         print("Loading test features from cache")
-        test_data = pd.read_hdf(cache_test_path, "table")
+        test_data = pd.read_hdf(cache_test_path, "table").to_dict()
     else:
         print("Loading test features")
         test_data = load_features(norms)
         print("saving test to cache")
-        test_data.to_hdf(cache_data_path, "table")
+        pd.DataFrame.from_dict(test_data).to_hdf(cache_data_path, "table")
 
     feature_list = ['mean_rt', 'mean_mb', 'ratio_mean_lt', 'ratio_mean_rt', 'ratio_mean_rb', 'max_rt', 'max_rb']
     xs = data[feature_list].values.tolist()
