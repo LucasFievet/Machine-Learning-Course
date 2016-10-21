@@ -57,6 +57,7 @@ def feature_max(area, training=True, norm=None):
         x_max = bin_edges[idx_max]
         fs.append(x_max)
 
+    print(fs)
     if norm == None:
         fs, minmax = normalize(fs)
         return fs, minmax
