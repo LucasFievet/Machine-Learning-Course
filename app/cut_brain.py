@@ -4,14 +4,14 @@ def cut_brain(sample, pos):
     data = [] 
     for d in sample:
         if pos == "lt":
-            z_s,z_e = 60,len(d[0,0,:])
+            z_s,z_e = 60,d.shape[2]
             y_s,y_e = 0,60
         elif pos == "mt":
-            z_s,z_e = 60,len(d[0,0,:])
+            z_s,z_e = 60,d.shape[2]
             y_s,y_e = 60,110
         elif pos == "rt":
-            z_s,z_e = 50,len(d[0,0,:])
-            y_s,y_e = 110,len(d[0,:,0])
+            z_s,z_e = 50,d.shape[2]
+            y_s,y_e = 110,d.shape[1]
         elif pos == "lb":
             z_s,z_e = 0,60 
             y_s,y_e = 0,60
@@ -20,7 +20,7 @@ def cut_brain(sample, pos):
             y_s,y_e = 60,110
         elif pos == "rb":
             z_s,z_e = 0,50
-            y_s,y_e = 110,len(d[0,:,0])
+            y_s,y_e = 110,d.shape[1]
 
         area = np.array([[z_s,z_e],[y_s,y_e]])
 
