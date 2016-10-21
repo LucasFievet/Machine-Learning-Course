@@ -1,4 +1,4 @@
-from .load_data_3d import load_targets, load_samples_inputs
+from .load_data_3d import load_targets, load_samples_inputs, load_deviations
 from .cut_brain import cut_brain
 from .feature import feature_mean, feature_max, feature_ratio_mean
 
@@ -12,7 +12,7 @@ def load_features(norms=None):
     inputs = [
         {
             "area": "whole",
-            "val": load_samples_inputs(training)
+            "val": load_deviations(training)
         }
     ]
     for a in areas:

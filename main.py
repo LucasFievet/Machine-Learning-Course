@@ -9,7 +9,7 @@ from app.predictor import predict
 from app.predictor_cut import predict_cut
 from app.predictor_cut_iterate import predict_cut_iterate
 from app.heatmap_side import heatmap_side
-
+from app.mean_brain import create_deviation_set
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
 if __name__ == "__main__":
@@ -41,4 +41,12 @@ if __name__ == "__main__":
                 print("Additional Argument needed for this!")
             else:
                 predict_cut_iterate(num=int(args[2]))
+        elif args[1] == "mean_brain":
+            if args[2] == "train":
+                training = True
+            elif args[2] == "test":
+                training = False
+            else:
+                print("Wrong Argument. Use: 'train' or 'test'")
+            create_deviation_set(training)
 
