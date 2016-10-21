@@ -49,7 +49,7 @@ def mean_brain(training=True):
     mean = np.zeros(load_sample_input(1,training).shape)
     for i in range(1,nof+1):
         data = load_sample_input(i,training) 
-        mean += np.divide(i,nof)
+        mean += np.divide(data,nof)
     return mean
 
 
