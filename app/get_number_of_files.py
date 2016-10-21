@@ -1,4 +1,5 @@
 import os
+from .settings import DATA_DIRECTORY
 
 def get_number_of_files(training=True):
     if training == True:
