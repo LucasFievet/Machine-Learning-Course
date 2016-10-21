@@ -1,5 +1,6 @@
 import os
 import scipy.io
+import numpy as np
 
 from .settings import DATA_DIRECTORY
 from .mean_brain import create_deviation_set 
@@ -31,5 +32,5 @@ def load_deviation(ID,training=True):
         "set_{}_deviation".format(files),
         "{}_{}.mat".format(files,ID)
         )
-    return scipy.io.loadmat(FILE)
+    return scipy.io.loadmat(FILE)['out']
 

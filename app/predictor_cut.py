@@ -13,7 +13,7 @@ from sklearn.metrics import accuracy_score
 
 from .settings import CURRENT_DIRECTORY
 from .squared_error import squared_error
-from .load_features import load_features
+from .load_features_test import load_features
 
 def predict_cut(training=True):
     cache_data_path = os.path.join(
