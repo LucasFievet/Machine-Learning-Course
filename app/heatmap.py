@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .load_data import load_sample_input
+from .load_deviations import load_deviation
 
 
 __author__ = "lfievet"
@@ -20,8 +21,10 @@ __status__ = "Production"
 
 
 def heatmap():
-    sample = 10
-    data = load_sample_input(sample)
+    sample = 20
+    #data = load_sample_input(sample)
+    
+    data = load_deviation(sample)
 
     # flat_data = data.get_data().flatten()
     # flat_data = flat_data[flat_data > 100]
@@ -38,7 +41,7 @@ def heatmap():
     # return
 
     for i in range(60, 150):
-        heat_map = data.get_data()[:, :, i, 0]
+        heat_map = data[:][:][i]  #.get_data()[:, :, i, 0]
         # print(heat_map)
         # print(heat_map.shape)
         # heatmap.reshape((176, 208))
