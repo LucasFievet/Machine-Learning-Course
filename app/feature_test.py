@@ -52,12 +52,11 @@ def feature_max(area, training=True, norm=None):
         if not area == "whole":
             data = cut_brain(data,area)
         data = get_flat_values(data) 
-        hist, bin_edges = np.histogram(data, 50)
+        hist, bin_edges = np.histogram(data, bins='auto')
         idx_max = hist.argmax()
         x_max = bin_edges[idx_max]
         fs.append(x_max)
 
-    print(fs)
     if norm == None:
         fs, minmax = normalize(fs)
         return fs, minmax

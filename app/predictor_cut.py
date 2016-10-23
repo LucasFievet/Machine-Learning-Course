@@ -14,6 +14,7 @@ from sklearn.metrics import accuracy_score
 from .settings import CURRENT_DIRECTORY
 from .squared_error import squared_error
 from .load_features_test import load_features
+from .get_number_of_files import get_number_of_files
 
 def predict_cut(training=True):
     cache_data_path = os.path.join(
@@ -60,9 +61,14 @@ def predict_cut(training=True):
     #print(data)
     #print(test_data)
     test_inputs = []
-    for f in feature_list:
-        test_inputs.append(test_data[f][0].tolist())
+    for i in range(0,get_number_of_files(training=False)):
+        tmp = []
+        for f in feature_list:
+            tmp.append(test_data[f][0][i])
+        test_inputs.append(tmp)
 
+    print(len(xs))
+    print(len(test_inputs))
     nn = KNeighborsRegressor(
         n_neighbors=3,
         weights="uniform",
