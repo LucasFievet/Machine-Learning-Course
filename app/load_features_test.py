@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from .load_data_3d import load_targets, load_samples_inputs
 from .load_deviations import load_deviations
 from .cut_brain_test import cut_brain
@@ -32,15 +34,10 @@ def load_features(norms=None):
             for a in areas:
                 feature_inputs , norms["{}_{}".format(f["name"], a)] = f["f"](a)
                 data["{}_{}".format(f["name"], a)] = feature_inputs
-               # plt.figure()
-               # plt.scatter(
-               #     feature_inputs,
-               #     data["Y"].tolist(),
-               # )
-               # plt.savefig("plots/line_{}_{}.pdf".format(
-               #     f["name"], i["area"]
-               # ))
-               # plt.close()
+                plt.figure()
+                plt.scatter(feature_inputs, data["Y"].tolist())
+                plt.savefig("plots/line_{}_{}.pdf".format(f["name"], a))
+                plt.close()
         return data, norms
     else:
         data = {} 

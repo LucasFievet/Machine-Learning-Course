@@ -16,7 +16,7 @@ def load_deviations(training=True):
         "set_{}_deviation".format(files),
         )
     if not os.path.exists(DIR):
-        create_deviation_set(training)
+        create_deviation_set()
     data = []
     for i in range(1,get_number_of_files(training)+1):
         data.append(load_deviation(i,training))
@@ -27,6 +27,12 @@ def load_deviation(ID,training=True):
         files = "train"
     else:
         files = "test"
+    DIR = os.path.join(
+        DATA_DIRECTORY,
+        "set_{}_deviation".format(files),
+        )
+    if not os.path.exists(DIR):
+        create_deviation_set()
     FILE = os.path.join(
         DATA_DIRECTORY,
         "set_{}_deviation".format(files),
