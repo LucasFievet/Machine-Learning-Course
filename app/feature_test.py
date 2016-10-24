@@ -6,11 +6,12 @@ from .normalize import normalize
 from .get_number_of_files import get_number_of_files
 from .load_deviations import load_deviation
 from .cut_brain_test import cut_brain
+from .load_data_3d import load_sample_input
 
 def feature_ratio_mean(area="whole", training=True, norm=None):
     fs = []
     for i in range(1,get_number_of_files(training)+1):
-        data = load_deviation(i,training) 
+        data = load_data(i,training) 
         if not area == "whole":
             data = cut_brain(data,area)
         data = get_flat_values(data) 
@@ -32,7 +33,7 @@ def feature_ratio_mean(area="whole", training=True, norm=None):
 def feature_mean(area, training=True, norm=None):
     fs = []
     for i in range(1,get_number_of_files(training)+1):
-        data = load_deviation(i,training) 
+        data = load_data(i,training) 
         if not area == "whole":
             data = cut_brain(data,area)
         data = get_flat_values(data) 
@@ -48,7 +49,7 @@ def feature_mean(area, training=True, norm=None):
 def feature_max(area, training=True, norm=None):
     fs = []
     for i in range(1,get_number_of_files(training)+1):
-        data = load_deviation(i,training) 
+        data = load_data(i,training) 
         if not area == "whole":
             data = cut_brain(data,area)
         data = get_flat_values(data) 
@@ -67,3 +68,8 @@ def feature_max(area, training=True, norm=None):
 def get_flat_values(inputs):
     vs = inputs.flatten()
     return vs #[vs > 100]
+
+def load_data(ID, training=True):
+   #return load_deviation(ID, training)
+   return load_sample_input(ID, training)
+
