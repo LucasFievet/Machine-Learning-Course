@@ -1,5 +1,4 @@
-"""Description of this file."""
-
+"""Visualizing data."""
 
 import matplotlib.pyplot as plt
 
