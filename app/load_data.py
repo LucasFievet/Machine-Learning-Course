@@ -20,18 +20,21 @@ __status__ = "Production"
 
 def load_samples_inputs(training=True):
     inputs = []
-    for i in range(1, 279):
-        inputs.append(load_sample_input(i))
+    for i in range(1, 279 if training else 139):
+        inputs.append(load_sample_input(i, training))
 
     return inputs
 
 
 def load_sample_input(id=1, training=True):
+    tag = "train" if training else "test"
+
     file_path = os.path.join(
         DATA_DIRECTORY,
-        "set_train",
-        "train_{}.nii".format(id)
+        "set_{}".format(tag),
+        "{}_{}.nii".format(tag, id)
     )
+
     return ni.load(file_path)
 
 

@@ -23,7 +23,7 @@ def histogram_plot(flat_data, filename):
     # flat_data = flat_data[flat_data < 1600]
 
     plt.figure()
-    y, x, z = plt.hist(flat_data, 50, normed=1, facecolor='green', alpha=0.75)
+    y, x, z = plt.hist(flat_data, normed=False, facecolor='green', alpha=0.75)
     # x = (x[1:] + x[:-1])/2
 
     # xs = np.linspace(100, 1600, 100)
@@ -34,9 +34,9 @@ def histogram_plot(flat_data, filename):
 
     # plt.plot(xs, ys, "k-")
 
-    plt.xlabel('Intensity')
-    plt.ylabel('Probability')
-    plt.title(r'$\mathrm{Histogram\ of\ Intensity}$')
+    plt.xlabel('Age')
+    plt.ylabel('Count')
+    plt.title(r'$\mathrm{Histogram\ of\ Ages}$')
     # plt.axis([40, 160, 0, 0.03])
     plt.grid(True)
     plt.savefig("plots/{}.pdf".format(filename))
