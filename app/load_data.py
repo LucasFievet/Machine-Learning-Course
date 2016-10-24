@@ -17,7 +17,6 @@ __email__ = "lfievet@ethz.ch"
 __date__ = "12/10/2016"
 __status__ = "Production"
 
-# Function containing a for-loop to load all the (278) training samples.
 
 def load_samples_inputs(training=True):
     inputs = []
@@ -26,7 +25,6 @@ def load_samples_inputs(training=True):
 
     return inputs
 
-# Function called in the for-loop above to load an individual (the id-th) training sample.
 
 def load_sample_input(id=1, training=True):
     file_path = os.path.join(
