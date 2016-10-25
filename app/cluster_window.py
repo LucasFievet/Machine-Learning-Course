@@ -8,6 +8,7 @@ import numpy as np
 
 from scipy.stats import linregress
 import scipy.ndimage.filters as filters
+import scipy.io
 
 import itertools
 
@@ -84,14 +85,15 @@ def get_window_age_correlating(w_size=10):
         CURRENT_DIRECTORY,
         "..",
         "cache",
-        "window-age-correlating-training.hdf"
+        "window-age-correlating-training.mat"
     )
 
     if os.path.exists(cache_path):
-        data = pd.read_hdf(cache_path, "table")
+        data = scipy.io.loadmat(cache_path)['out']
     else:
         data = window_age_correlation_compute(w_size)
         data.to_hdf(cache_path, "table")
+        scipy.io.savemat(cache_path, mdict={'out': data}, oned_as='row')
 
     print("")
     print(data)
@@ -108,13 +110,13 @@ def window_age_correlation_compute(w_size=10):
     window = np.zeros((w_size,w_size,w_size))
     w_range = range(0,w_size)
 
-    l_x = len(inputs[0][:, 0, 0, 0])
-    l_y = len(inputs[0][0, :, 0, 0])
-    l_z = len(inputs[0][0, 0, :, 0])
+    l_x = len(inputs[0][:, 0, 0, 0])-w_size
+    l_y = len(inputs[0][0, :, 0, 0])-w_size
+    l_z = len(inputs[0][0, 0, :, 0])-w_size
 
-    x_range = range(0, l_x-w_size)
-    y_range = range(0, l_y-w_size)
-    z_range = range(0, l_z-w_size)
+    x_range = range(0, l_x)
+    y_range = range(0, l_y)
+    z_range = range(0, l_z)
 
     slopes = []
     rs = []
@@ -124,7 +126,7 @@ def window_age_correlation_compute(w_size=10):
     rc = np.zeros(inputs[0][:,:,:,0].shape)
 
     for c in itertools.product(x_range, y_range, z_range):
-        print_progress("({}, {}, {})".format(*c))
+        print_progress("({}, {}, {})({},{},{})".format(*c,l_x,l_y,l_z))
 
         vs = []
         for i in inputs:
