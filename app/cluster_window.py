@@ -63,10 +63,8 @@ def local_max_loactions(data, w_size, thresh=0):
     out = []
     shape = data.shape
     f = filters.maximum_filter(data,size=w_size) 
-    for c in itertools.product(range(shape[0]),range(shape[1]),range(shape[2])):
-        if f[c[0],c[1],c[2]] == data[c[0],c[1],c[2]]:
-            if f[c[0],c[1],c[2]] > thresh:
-                out.append(c)
+    iter_range = itertools.product(range(shape[0]),range(shape[1]),range(shape[2]))
+    out = [c for c in iter_range if f[c[0],c[1],c[2]]==data[c[0],c[1],c[2]] if f[c[0],c[1],c[2]]>thresh]
     print(len(out))
     return out 
 
@@ -74,12 +72,13 @@ def compute_cluster_areas(data, window, w_size=10):
     out = []
     shape = window.shape
     w_range = range(w_size)
-    for c in itertools.product(range(shape[0]-w_size),range(shape[1]-w_size),range(shape[2]-w_size)):
+    iter_range = itertools.product(range(shape[0]-w_size),range(shape[1]-w_size),range(shape[2]-w_size))
+    for c in iter_range:
         print_progress("({}, {}, {})".format(*c))
-        if window[c[0]][c[1]][c[2]] == 1:
-            tmp = np.zeros(w_size,w_size,w_size)
+        if window[c[0],c[1],c[2]] == 1:
+            tmp = np.zeros((w_size,w_size,w_size))
             for w in itertools.product(w_range,w_range,w_range):
-                tmp[w[0]][w[1]][w[2]] = data[c[0]+w[0], c[1]+w[1], c[2]+w[2], 0]
+                tmp[w[0],w[1],w[2]] = data[c[0]+w[0],c[1]+w[1],c[2]+w[2],0]
             out.append(tmp)
     return out
 
@@ -109,9 +108,6 @@ def window_age_correlation_compute(w_size=10):
 
     inputs = [i.get_data() for i in training_inputs]
 
-    window = np.zeros((w_size,w_size,w_size))
-    w_range = range(0,w_size)
-
     steps = 2
 
     l_x = len(inputs[0][:, 0, 0, 0])-w_size
@@ -121,6 +117,7 @@ def window_age_correlation_compute(w_size=10):
     x_range = range(0, l_x, steps)
     y_range = range(0, l_y, steps)
     z_range = range(0, l_z, steps)
+    w_range = range(0,w_size)
 
     slopes = []
     rs = []
@@ -134,7 +131,7 @@ def window_age_correlation_compute(w_size=10):
         for i in inputs:
             mean = 0
             for w in itertools.product(w_range,w_range,w_range):
-                mean += i[c[0]+w[0], c[1]+w[1], c[2]+w[2], 0]
+                mean += i[c[0]+w[0],c[1]+w[1],c[2]+w[2],0]
             mean /= w_size**3
             vs.append(mean)
 
