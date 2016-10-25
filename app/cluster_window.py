@@ -25,14 +25,16 @@ from .histogram_plot import histogram_plot
 
 from .settings import CURRENT_DIRECTORY
 
-def get_cluster_mean(w_size=10, thresh=0):
+def get_cluster_mean(w_size=10, thresh=0, training=True):
+    tag = "train" if training else "test"
     cache_path = os.path.join(
-        CURRENT_DIRECTORY,"..","cache","cluster_mean_training.mat"
+        CURRENT_DIRECTORY,"..","cache",
+        "cluster_mean_{}.mat".format(tag)
     )
     if os.path.exists(cache_path):
         data = scipy.io.loadmat(cache_path)['out']
     else:
-        areas = get_clusters(w_size,thresh)
+        areas = get_clusters(w_size,thresh,training)
         data = cluster_mean(areas) 
         scipy.io.savemat(cache_path, mdict={'out': data}, oned_as='row')
     print("Items,Entries:",np.shape(data))
@@ -41,20 +43,22 @@ def get_cluster_mean(w_size=10, thresh=0):
 def cluster_mean(data):
     return [[np.mean(k.flatten()) for k in d] for d in data]
 
-def get_clusters(w_size=10, thresh=0):
+def get_clusters(w_size=10, thresh=0, training=True):
+    tag = "train" if training else "test"
     cache_path = os.path.join(
-        CURRENT_DIRECTORY,"..","cache","cluster_areas_training.mat"
+        CURRENT_DIRECTORY,"..","cache",
+        "cluster_areas_{}.mat".format(tag)
     )
     if os.path.exists(cache_path):
         data = scipy.io.loadmat(cache_path)['out']
     else:
-        data = get_cluster_areas(w_size, thresh)
+        data = get_cluster_areas(w_size,thresh,training)
         scipy.io.savemat(cache_path, mdict={'out': data}, oned_as='row')
-    print(data.shape)
+    print(np.shape(data))
     return data
 
-def get_cluster_areas(w_size=10, thresh=0):
-    inputs = load_samples_inputs()
+def get_cluster_areas(w_size=10, thresh=0, training=True):
+    inputs = load_samples_inputs(training)
     correlation = get_window_age_correlating(w_size)
     locations = local_max_loactions(correlation, w_size, thresh) 
     return [compute_cluster_areas(i.get_data(),locations,w_size) for i in inputs]
