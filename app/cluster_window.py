@@ -112,13 +112,15 @@ def window_age_correlation_compute(w_size=10):
     window = np.zeros((w_size,w_size,w_size))
     w_range = range(0,w_size)
 
+    steps = 2
+
     l_x = len(inputs[0][:, 0, 0, 0])-w_size
     l_y = len(inputs[0][0, :, 0, 0])-w_size
     l_z = len(inputs[0][0, 0, :, 0])-w_size
 
-    x_range = range(0, l_x)
-    y_range = range(0, l_y)
-    z_range = range(0, l_z)
+    x_range = range(0, l_x, steps)
+    y_range = range(0, l_y, steps)
+    z_range = range(0, l_z, steps)
 
     slopes = []
     rs = []
