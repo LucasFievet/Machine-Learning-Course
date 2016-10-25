@@ -25,6 +25,9 @@ from .histogram_plot import histogram_plot
 
 from .settings import CURRENT_DIRECTORY
 
+def cluster_mean(data):
+    return [[np.mean(k.flatten()) for k in d] for d in data]
+
 def get_clusters(w_size=10, thresh=0):
     cache_path = os.path.join(
         CURRENT_DIRECTORY,
@@ -92,7 +95,6 @@ def get_window_age_correlating(w_size=10):
         data = scipy.io.loadmat(cache_path)['out']
     else:
         data = window_age_correlation_compute(w_size)
-        data.to_hdf(cache_path, "table")
         scipy.io.savemat(cache_path, mdict={'out': data}, oned_as='row')
 
     print("")
@@ -121,19 +123,18 @@ def window_age_correlation_compute(w_size=10):
     slopes = []
     rs = []
     ps = []
-    count = 0
-
     rc = np.zeros(inputs[0][:,:,:,0].shape)
 
     for c in itertools.product(x_range, y_range, z_range):
-        print_progress("({}, {}, {})({},{},{})".format(*c,l_x,l_y,l_z))
+        print_progress("({}, {}, {})({},{},{})".format(c[0],c[1],c[2],l_x,l_y,l_z))
 
         vs = []
         for i in inputs:
+            mean = 0
             for w in itertools.product(w_range,w_range,w_range):
-                window[w[0]][w[1]][w[2]] = i[c[0]+w[0], c[1]+w[1], c[2]+w[2], 0]
-            w_data = window.flatten()
-            vs.append(np.mean(w_data))
+                mean += i[c[0]+w[0], c[1]+w[1], c[2]+w[2], 0]
+            mean /= w_size**3
+            vs.append(mean)
 
         slope, intercept, r, p, std = linregress(ages, vs)
         slopes.append(slope)
@@ -147,9 +148,7 @@ def window_age_correlation_compute(w_size=10):
     histogram_plot(rs, "rs")
     histogram_plot(ps, "ps")
 
-
     return rc 
-
 
 def print_progress(s):
     sys.stdout.write("\r%s" % s)
