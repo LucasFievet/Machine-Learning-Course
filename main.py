@@ -41,7 +41,7 @@ if __name__ == "__main__":
         elif args[1] == "predict_cut":
             predict_cut()
         elif args[1] == "predict_cluster":
-            get_clusters(w_size=5)
+            get_clusters(w_size=5,thresh=0.4)
         elif args[1] == "predict_cut_iterate":
             if len(args) < 3:
                 print("Additional Argument needed for this!")
