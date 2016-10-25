@@ -25,6 +25,19 @@ from .histogram_plot import histogram_plot
 
 from .settings import CURRENT_DIRECTORY
 
+def get_cluster_mean(w_size=10, thresh=0):
+    cache_path = os.path.join(
+        CURRENT_DIRECTORY,"..","cache","cluster_mean_training.mat"
+    )
+    if os.path.exists(cache_path):
+        data = scipy.io.loadmat(cache_path)['out']
+    else:
+        areas = get_clusters(w_size,thresh)
+        data = cluster_mean(areas) 
+        scipy.io.savemat(cache_path, mdict={'out': data}, oned_as='row')
+    print("Items,Entries:",np.shape(data))
+    return data
+
 def cluster_mean(data):
     return [[np.mean(k.flatten()) for k in d] for d in data]
 
