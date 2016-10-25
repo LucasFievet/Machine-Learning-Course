@@ -4,6 +4,7 @@
 import matplotlib.pyplot as plt
 
 import numpy as np
+from scipy.optimize import curve_fit
 
 from .load_data import load_sample_input
 
@@ -19,26 +20,12 @@ __date__ = "12/10/2016"
 __status__ = "Production"
 
 
-def heatmap():
-    sample = 10
-    data = load_sample_input(sample)
+def heatmap(data):
+    # sample = 1
+    # data = load_sample_input(sample)
 
-    # flat_data = data.get_data().flatten()
-    # flat_data = flat_data[flat_data > 100]
-    #
-    # plt.hist(flat_data, 50, normed=1, facecolor='green', alpha=0.75)
-    # plt.xlabel('Smarts')
-    # plt.ylabel('Probability')
-    # plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=100,\ \sigma=15$')
-    # # plt.axis([40, 160, 0, 0.03])
-    # plt.grid(True)
-    # plt.savefig("plots/hist{}.pdf".format(sample))
-    #
-    # # print(flat_data)
-    # return
-
-    for i in range(60, 150):
-        heat_map = data.get_data()[:, :, i, 0]
+    for i in range(60, 150, 10):
+        heat_map = data[:, :, i]
         # print(heat_map)
         # print(heat_map.shape)
         # heatmap.reshape((176, 208))
@@ -58,4 +45,10 @@ def heatmap():
         #
         plt.clf()
         plt.imshow(heat_map)
-        plt.savefig("plots/test{}.pdf".format(i))
+        plt.savefig("plots/brain-diff-{}.pdf".format(i))
+
+
+def double_normal(x, a1, s1, mu1, a2, s2, mu2):
+    x1 = x - mu1
+    x2 = x - mu2
+    return a1*np.exp(-s1*x1*x1) + a2*np.exp(-s2*x2*x2)
