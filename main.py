@@ -27,7 +27,7 @@ if __name__ == "__main__":
     if len(args) < 2:
         print("You need to specify a function")
     else:
-        elif args[1] == "heatmap":
+        if args[1] == "heatmap":
             heatmap()
         elif args[1] == "heatmap_side":
             heatmap_side()
