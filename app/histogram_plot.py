@@ -23,15 +23,31 @@ def histogram_plot(flat_data, filename):
     # flat_data = flat_data[flat_data < 1600]
 
     plt.figure()
-    y, x, z = plt.hist(flat_data, normed=False, facecolor='green', alpha=0.75)
+    y, x, z = plt.hist(
+        flat_data,
+        bins=10,
+        normed=True,
+        facecolor='green',
+        alpha=0.75
+    )
+
+    # Fit a normal distribution to the data:
+    # from scipy.stats import skewnorm
+    # params = skewnorm.fit(flat_data)
+
     # x = (x[1:] + x[:-1])/2
 
-    # xs = np.linspace(100, 1600, 100)
+    # xs = np.linspace(
+    #     min(flat_data),
+    #     max(flat_data),
+    #     100
+    # )
     # popt, pcov = curve_fit(double_normal, x, y, [1E-3, 1E-4, 800, 1E-3, 1E-4, 1400])
     # print(popt)
     # print(pcov)
-    # ys = double_normal(xs, *popt)
-
+    # ys = skewnorm.pdf(xs, *params)
+    # print(ys)
+    #
     # plt.plot(xs, ys, "k-")
 
     plt.xlabel('Age')
@@ -40,6 +56,8 @@ def histogram_plot(flat_data, filename):
     # plt.axis([40, 160, 0, 0.03])
     plt.grid(True)
     plt.savefig("plots/{}.pdf".format(filename))
+
+    # return params
 
 
 def double_normal(x, a1, s1, mu1, a2, s2, mu2):

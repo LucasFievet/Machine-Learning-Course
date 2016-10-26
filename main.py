@@ -10,6 +10,7 @@ from app.predictor_cluster import predict_cluster
 from app.predictor_cut import predict_cut
 from app.predictor_cut_iterate import predict_cut_iterate
 from app.heatmap_side import heatmap_side
+from app.experimental import scan_volume
 
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
@@ -39,6 +40,8 @@ if __name__ == "__main__":
             predict_cut()
         elif args[1] == "predict_cluster":
             predict_cluster()
+        elif args[1] == "scan_volume":
+            scan_volume()
         elif args[1] == "predict_cut_iterate":
             if len(args) < 3:
                 print("Additional Argument needed for this!")
