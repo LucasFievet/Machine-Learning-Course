@@ -1,4 +1,3 @@
-
 import os
 
 import matplotlib.pyplot as plt
@@ -8,22 +7,19 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from .settings import CURRENT_DIRECTORY
 
-
-def locations_3D():
-    cache_path = os.path.join(CURRENT_DIRECTORY ,".." ,"cache" ,"local_max_loactions.mat")
+def locations_3D(w_size=5):
+    cache_path = os.path.join(CURRENT_DIRECTORY ,".." ,"cache" ,"local_max_locations.mat")
     if os.path.exists(cache_path):
         out = scipy.io.loadmat(cache_path)['out']
         n = len(out)
-        x = []
-        y = []
-        z = []
+        x , y, z = [], [], []
 
         print("Number of maxima =", n)
 
         for i in range(n):
-            x.append(out[i, 0] + 2.5)
-            y.append(out[i, 1] + 2.5)
-            z.append(out[i, 2] + 2.5)
+            x.append(out[i, 0] + w_size/2)
+            y.append(out[i, 1] + w_size/2)
+            z.append(out[i, 2] + w_size/2)
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
