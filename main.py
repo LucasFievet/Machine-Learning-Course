@@ -46,7 +46,7 @@ if __name__ == "__main__":
             get_clusters(w_size=5,thresh=0.4)
         elif args[1] == "ridge":
             ridge_predict() 
-        elif args[1] == "predict_cluster":
+        elif args[1] == "predict_cluster2":
             predict_cluster()
         elif args[1] == "predict_cut_iterate":
             if len(args) < 3:
