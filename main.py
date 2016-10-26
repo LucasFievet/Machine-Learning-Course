@@ -11,6 +11,8 @@ from app.predictor_cut import predict_cut
 from app.predictor_cut_iterate import predict_cut_iterate
 from app.heatmap_side import heatmap_side
 from app.experimental import scan_volume
+from app.cluster_window import get_clusters, get_cluster_mean
+from app.ridge_predict import ridge_predict
 
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
@@ -38,10 +40,14 @@ if __name__ == "__main__":
             heatmap_side()
         elif args[1] == "predict_cut":
             predict_cut()
-        elif args[1] == "predict_cluster":
-            predict_cluster()
         elif args[1] == "scan_volume":
             scan_volume()
+        elif args[1] == "predict_cluster":
+            get_clusters(w_size=5,thresh=0.4)
+        elif args[1] == "ridge":
+            ridge_predict() 
+        elif args[1] == "predict_cluster":
+            predict_cluster()
         elif args[1] == "predict_cut_iterate":
             if len(args) < 3:
                 print("Additional Argument needed for this!")
