@@ -5,6 +5,7 @@ import os
 
 from app.load_data import load_sample_input
 from app.heatmap import heatmap
+from app.locations_3Dplot import locations_3D
 from app.predictor import predict
 from app.predictor_cluster import predict_cluster
 from app.predictor_cut import predict_cut
@@ -40,6 +41,8 @@ if __name__ == "__main__":
             heatmap_side()
         elif args[1] == "predict_cut":
             predict_cut()
+        elif args[1] == "locations_3D":
+            locations_3D()
         elif args[1] == "scan_volume":
             scan_volume()
         elif args[1] == "predict_cluster":
