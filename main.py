@@ -2,8 +2,8 @@
 
 import sys
 import os
+from time import strftime
 
-from app.load_data import load_sample_input
 from app.heatmap import heatmap
 from app.locations_3Dplot import locations_3D
 from app.predictor_cluster import predict_cluster
@@ -14,6 +14,7 @@ from app.ridge_predict import ridge_predict
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
 if __name__ == "__main__":
+    print(strftime("%Y-%m-%d %H:%M:%S"))
     if not os.path.exists(CACHE_DIRECTORY):
         os.makedirs(CACHE_DIRECTORY)
 
