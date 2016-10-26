@@ -64,7 +64,7 @@ def get_cluster_areas(w_size=10, thresh=0, training=True):
     return [compute_cluster_areas(i.get_data(),locations,w_size) for i in inputs]
 
 def local_max_loactions(data, w_size=10, thresh=0):
-    cache_path = os.path.join(CURRENT_DIRECTORY,"..","cache","local_max_loactions.mat")
+    cache_path = os.path.join(CURRENT_DIRECTORY,"..","cache","local_max_locations.mat")
     if os.path.exists(cache_path):
         out = scipy.io.loadmat(cache_path)['out']
     else:
