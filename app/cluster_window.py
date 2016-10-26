@@ -63,11 +63,16 @@ def get_cluster_areas(w_size=10, thresh=0, training=True):
     locations = local_max_loactions(correlation, w_size, thresh) 
     return [compute_cluster_areas(i.get_data(),locations,w_size) for i in inputs]
 
-def local_max_loactions(data, w_size, thresh=0):
-    f = filters.maximum_filter(data,size=w_size) 
-    shape = data.shape
-    iter_range = itertools.product(range(shape[0]),range(shape[1]),range(shape[2]))
-    out = [c for c in iter_range if f[c[0],c[1],c[2]]==data[c[0],c[1],c[2]] if f[c[0],c[1],c[2]]>thresh]
+def local_max_loactions(data, w_size=10, thresh=0):
+    cache_path = os.path.join(CURRENT_DIRECTORY,"..","cache","local_max_loactions.mat")
+    if os.path.exists(cache_path):
+        out = scipy.io.loadmat(cache_path)['out']
+    else:
+        f = filters.maximum_filter(data,size=w_size) 
+        shape = data.shape
+        iter_range = itertools.product(range(shape[0]),range(shape[1]),range(shape[2]))
+        out = [c for c in iter_range if f[c[0],c[1],c[2]]==data[c[0],c[1],c[2]] if f[c[0],c[1],c[2]]>thresh]
+        scipy.io.savemat(cache_path, mdict={'out': out}, oned_as='row')
     print("maximas found:",len(out))
     return out 
 
