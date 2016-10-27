@@ -10,6 +10,7 @@ from app.predictor_cluster import predict_cluster
 from app.heatmap_side import heatmap_side
 from app.experimental import scan_volume
 from app.ridge_predict import ridge_predict
+from app.simple_ratio import simple_ratio
 
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
@@ -40,4 +41,7 @@ if __name__ == "__main__":
             ridge_predict() 
         elif args[1] == "predict_cluster2":
             predict_cluster()
+        elif args[1] == "ratio":
+            simple_ratio()
+
 
