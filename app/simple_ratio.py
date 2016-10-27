@@ -44,7 +44,7 @@ def ratio_dict(ratios):
     return {comb_names[i]:ratios.transpose()[i] for i in range(len(comb_names))}
 
 def get_ratios(data):
-    data = data.get_data()[:,:,:,0]
+    data = data.get_data()[25:-25,20:-20,70:-20,0]
 
     zeros = count_zero(data)
     low = count_range(data,[10,400])
