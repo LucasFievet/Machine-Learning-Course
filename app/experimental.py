@@ -8,8 +8,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from .load_data import load_targets, load_samples_inputs
+from .predictor_cluster import histogram_plot
 
-from sklearn.linear_model import Lasso
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import Lasso, LinearRegression
 from sklearn.cross_validation import cross_val_predict
 from sklearn.metrics import mean_squared_error
 
@@ -34,31 +37,39 @@ def scan_volume():
     data = load_targets()
     ages = data["Y"].tolist()
 
+    # inputs_20_25, young_ages = filter_samples(training_inputs, ages, 25, 60)
+    # brain_variance(inputs_20_25)
+    #
+    # return
+
     young_inputs, young_ages = filter_samples(training_inputs, ages, 0, 60)
     old_inputs, old_ages = filter_samples(training_inputs, ages, 60, 100)
 
-    predictor_all = cross_val_predict_data(training_inputs, ages, "all")
-    predictor_young = cross_val_predict_data(young_inputs, young_ages, "young")
-    predictor_old = cross_val_predict_data(old_inputs, old_ages, "old")
+    predictor_all = cross_val_predict_data2(training_inputs, ages, "all")
+    predictor_young = cross_val_predict_data2(young_inputs, young_ages, "young")
+    predictor_old = cross_val_predict_data2(old_inputs, old_ages, "old")
+    # print(np.var(young_ages))
+
+    # return
 
     test_inputs = load_samples_inputs(False)
-    test_data = [i.get_data()[:, :, :, 0].flatten() for i in test_inputs]
-    test_data = [np.histogram(i, bins=30, range=[100, 1600])[0] for i in test_data]
+    test_data = pre_process(test_inputs)
+    test_data = [binarize(i, 7) for i in test_data]
 
-    ratios1_test = get_ratios(test_data, predictor_all.best_p)
-    ratios2_test = get_ratios(test_data, predictor_all.best_n)
-    ratios_test = [[r1, r2] for r1, r2 in zip(ratios1_test, ratios2_test)]
+    # ratios1_test = get_ratios(test_data, predictor_all.best_p)
+    # ratios2_test = get_ratios(test_data, predictor_all.best_n)
+    # ratios_test = [[r1, r2] for r1, r2 in zip(ratios1_test, ratios2_test)]
 
-    test_predicted = predictor_all.predict(ratios_test)
+    test_predicted = predictor_all.predict(test_data)
 
     for idx, p in enumerate(test_predicted):
         data_idx = test_data[idx]
         if p < 50:
-            refined_prediction = predict_sample(predictor_young, data_idx)
+            refined_prediction = predictor_young.predict(data_idx)
             test_predicted[idx] = refined_prediction
             print("{}: {}".format(p, refined_prediction))
-        if p >= 65:
-            refined_prediction = predict_sample(predictor_old, data_idx)
+        if p >= 60:
+            refined_prediction = predictor_old.predict(data_idx)
             test_predicted[idx] = refined_prediction
             print("{}: {}".format(p, refined_prediction))
 
@@ -90,7 +101,7 @@ def filter_samples(inputs, ages, age_min, age_max):
     filtered_inputs = []
     filtered_ages = []
     for input_data, age in zip(inputs, ages):
-        if age_min < age < age_max:
+        if age_min < age <= age_max:
             filtered_inputs.append(input_data)
             filtered_ages.append(age)
 
@@ -103,24 +114,30 @@ def cross_val_predict_data(inputs, ages, tag="all"):
 
     if tag == "all":
         scan = False
-        best_p_xs = 8, 9, 10, 11
-        best_n_xs = 12, 14, 15, 23
+        best_p_xs = 9, 15, 18, 19
+        best_n_xs = 12, 13, 15, 24
     elif tag == "young":
-        scan = False
+        scan = True
         best_p_xs = 0, 5, 24, 29
         best_n_xs = 12, 14, 16, 27
     elif tag == "old":
         scan = False
-        best_p_xs = 2, 5, 24, 29
-        best_n_xs = 13, 14, 18, 23
+        best_p_xs = 0, 7, 23, 29
+        best_n_xs = 0, 4, 13, 14
     else:
         best_p_xs = 0, 0, 0, 0
         best_n_xs = 0, 0, 0, 0
 
-    inputs = [i.get_data()[:, :, :, 0].flatten() for i in inputs]
-    inputs = [np.histogram(i, bins=bins, range=[100, 1600])[0] for i in inputs]
+    inputs = pre_process(inputs)
+    inputs = [binarize(i, bins) for i in inputs]
+    best_mse = 100
     best_p_r = 0
     best_n_r = 0
+
+    predictor = Pipeline([
+        ('poly', PolynomialFeatures(degree=2)),
+        ('linear', LinearRegression(fit_intercept=False))
+    ])
 
     if scan:
         for x1 in range(0, bins-3):
@@ -128,26 +145,41 @@ def cross_val_predict_data(inputs, ages, tag="all"):
                 for x3 in range(x2+1, bins-1):
                     for x4 in range(x3+1, bins):
                         ratios = get_ratios(inputs, (x1, x2, x3, x4))
-                        slope, intercept, r, p, std = linregress(ages, ratios)
+                        ratios = [[r] for r in ratios]
+                        predicted = cross_val_predict(predictor, ratios, ages, cv=10, n_jobs=4)
+                        mse = mean_squared_error(ages, predicted)
+                        print_progress("%s-%s-%s-%s: %s" % (x1, x2, x3, x4, mse))
 
-                        if slope > 0 and r**2 >= best_p_r:
-                            best_p_r = r**2
+                        if mse < best_mse:
+                            best_mse = mse
+                            print("\n%s-%s-%s-%s: %s" % (x1, x2, x3, x4, mse))
                             best_p_xs = x1, x2, x3, x4
-                            print("p-%s-%s-%s-%s: %s" % (x1, x2, x3, x4, r**2))
-                            correlation_plot(ratios, ages, "ratios-age-p-%s" % tag)
 
-                        if slope < 0 and r**2 >= best_n_r:
-                            best_n_r = r**2
-                            best_n_xs = x1, x2, x3, x4
-                            print("n-%s-%s-%s-%s: %s" % (x1, x2, x3, x4, r**2))
-                            correlation_plot(ratios, ages, "ratios-age-n-%s" % tag)
+                        # slope, intercept, r, p, std = linregress(ages, ratios)
+                        # coefs, r, rank, singular_values, rcond = np.polyfit(ratios, ages, 2, full=True)
+                        # slope = coefs[1]
+                        # r = 1 - (r[0]/len(ages))/np.var(ages)
+                        #
+                        # if slope > 0 and r**2 > best_p_r:
+                        #     best_p_r = r**2
+                        #     best_p_xs = x1, x2, x3, x4
+                        #     print_progress("p-%s-%s-%s-%s: %s" % (x1, x2, x3, x4, r**2))
+                        #     correlation_plot(ratios, ages, "ratios-age-p-%s" % tag)
+                        #
+                        # if slope < 0 and r**2 > best_n_r:
+                        #     best_n_r = r**2
+                        #     best_n_xs = x1, x2, x3, x4
+                        #     print_progress("n-%s-%s-%s-%s: %s" % (x1, x2, x3, x4, r**2))
+                        #     correlation_plot(ratios, ages, "ratios-age-n-%s" % tag)
 
     ratios1_training = get_ratios(inputs, best_p_xs)
     ratios2_training = get_ratios(inputs, best_n_xs)
     ratios_training = [[r1, r2] for r1, r2 in zip(ratios1_training, ratios2_training)]
+    # ratios = get_ratios(inputs, best_p_xs)
+    # ratios_training = [[r] for r in ratios]
 
-    predictor = Lasso(alpha=0)
-    predicted = cross_val_predict(predictor, ratios_training, ages, cv=5)
+    # predictor = Lasso(alpha=0)
+    predicted = cross_val_predict(predictor, ratios_training, ages, cv=10)
 
     predictor.fit(ratios_training, ages)
     print("-"*100)
@@ -162,6 +194,52 @@ def cross_val_predict_data(inputs, ages, tag="all"):
     predictor.best_n = best_n_xs
 
     return predictor
+
+
+def cross_val_predict_data2(inputs, ages, tag="all"):
+    bins = 7
+    inputs = pre_process(inputs)
+    inputs = [binarize(i, bins) for i in inputs]
+
+    predictor = Pipeline([
+        ('poly', PolynomialFeatures(degree=2)),
+        ('linear', LinearRegression(fit_intercept=False))
+    ])
+
+    predicted = cross_val_predict(predictor, inputs, ages, cv=10, n_jobs=6)
+
+    predictor.fit(inputs, ages)
+    print("-"*100)
+    print(tag)
+    print(predictor.score(inputs, ages))
+    print("mse")
+    print(mean_squared_error(ages, predicted))
+
+    correlation_plot(predicted, ages, "ratios-predicted-actual-%s" % tag, line=True)
+
+    return predictor
+
+
+def binarize(i, bins):
+    hist, edges = np.histogram(i, bins=bins, range=[100, 1600], normed=True)
+    edges = (edges[:-1] + edges[1:])/2
+    hist *= edges
+    return hist
+
+
+def pre_process(data):
+    inputs = np.array([i.get_data()[:, :, :, 0].flatten() for i in data])
+    return inputs
+    stds = np.std(inputs, axis=0)
+    # histogram_plot(stds[stds > 0], "stds-hist", bins=100)
+
+    indices = np.where(stds < 75)
+    return [i[indices] for i in inputs]
+    # histogram_plot(inputs, "stds-max-hist", bins=10)
+    # print(np.where(stds > 300))
+
+
+    # inputs = [np.histogram(i, bins=bins, range=[100, 1600])[0] for i in inputs]
 
 
 def get_ratios(inputs, xs):

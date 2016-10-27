@@ -18,14 +18,14 @@ __date__ = "20/10/2016"
 __status__ = "Production"
 
 
-def histogram_plot(flat_data, filename):
+def histogram_plot(flat_data, filename, bins=10):
     # flat_data = flat_data[flat_data > 2]
     # flat_data = flat_data[flat_data < 1600]
 
     plt.figure()
     y, x, z = plt.hist(
         flat_data,
-        bins=10,
+        bins=bins,
         normed=True,
         facecolor='green',
         alpha=0.75
