@@ -22,32 +22,41 @@ def simple_ratio():
     train = load_samples_inputs(True)
     test = load_samples_inputs(False)
     ratios_train = np.array(list(map(get_ratios,train)))    
-    ratios_test = np.array(list(map(get_ratios,test)))
     print(np.shape(ratios_train))
+    ratios_test = np.array(list(map(get_ratios,test)))
     print(np.shape(ratios_test))
-
-    comb_names = list(map(list, combinations(['zeros','low','gray','white'], 2)))
-    comb_names = list(map(lambda x: x[0]+'-'+x[1], comb_names))
-    for i in range(len(ratios_train[0,:])):
-        plot(ratios_train.transpose()[i,:],y,comb_names[i],comb_names[i])
+    train_dict = ratio_dict(ratios_train)
+    for i in train_dict.keys():
+        plot(train_dict[i],y,i,i)
 
     clf = LinearRegression()
-    weights = [sqrt(1.0/y.count(y[i])) for i in range(len(y))]
-    scaler = preprocessing.StandardScaler().fit(ratios_train)
-    Xtrain = scaler.transform(ratios_train)
-    Xtest = scaler.transform(ratios_test)
-    predicted = cross_val_predict(clf,ratios_train,y,fit_params={'sample_weight':weights},cv=5)
+    predicted = cross_val_predict(clf,ratios_train,y,cv=5)
     print(mean_squared_error(y,predicted))
+    clf.fit(ratios_train,y)
+    result = {"ID": list(range(1,len(test)+1)), "Prediction": clf.predict(ratios_test)}
+    result_path = os.path.join(CURRENT_DIRECTORY,"..","result.csv")
+    pd.DataFrame(result).to_csv(result_path,index=False)
+    
+def ratio_dict(ratios):
+    #comb_names = list(map(list, combinations(['zeros','low','gray','white'], 2)))
+    #comb_names = list(map(lambda x: x[0]+'-'+x[1], comb_names))
+    comb_names = ['low-gray','low-white','zeros-gray','zeros-low','gray-white','gray','low']
+    return {comb_names[i]:ratios.transpose()[i] for i in range(len(comb_names))}
 
 def get_ratios(data):
     data = data.get_data()[:,:,:,0]
+
     zeros = count_zero(data)
-    low = count_range(data,[0,200])
-    gray = count_range(data,[650,1000])
-    white = count_range(data,[1200,1600])
-    combs = list(map(list, combinations([zeros,low,gray,white], 2)))
+    low = count_range(data,[10,400])
+    gray = count_range(data,[650,900])
+    white = count_range(data,[1300,1800])
+
+    #combs = list(map(list, combinations([zeros,low,gray,white], 2)))
+    combs = [[low,gray],[low,white],[zeros,gray],[zeros,low],[gray,white]]
     ratios = list(map(lambda x: x[1]/x[0], combs))
-    return ratios
+    ratios.append(gray)
+    ratios.append(low)
+    return np.array(ratios )
 
 def count_zero(data):
     return np.count_nonzero(np.logical_not(data>0))
