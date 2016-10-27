@@ -25,23 +25,43 @@ from .histogram_plot import histogram_plot
 
 from .settings import CURRENT_DIRECTORY
 
-def get_cluster_mean(w_size=10, thresh=0, training=True):
+GRAY__MIN = 650
+GRAY__MAX = 1000
+
+def get_count_gray(w_size=10, thresh=0, training=True):
     tag = "train" if training else "test"
     cache_path = os.path.join(
         CURRENT_DIRECTORY,"..","cache",
-        "cluster_mean_{}.mat".format(tag)
+        "count_gray_{}.mat".format(tag)
     )
     if os.path.exists(cache_path):
         data = scipy.io.loadmat(cache_path)['out']
     else:
-        areas = get_clusters(w_size,thresh,training)
-        data = cluster_mean(areas) 
+        data = cluster_grays(w_size,thresh,training) 
         scipy.io.savemat(cache_path, mdict={'out': data}, oned_as='row')
     print("Items,Entries:",np.shape(data))
     return data
 
-def cluster_mean(data):
-    return [[np.mean(k.flatten()) for k in d] for d in data]
+def cluster_grays(w_size=10, thresh=0, training=True):
+    inputs = load_samples_inputs(training)
+    correlation = get_window_age_correlating(w_size)
+    locations = local_max_locations(correlation, w_size, thresh) 
+    out = []
+    for i in inputs:
+        data = compute_cluster_areas(i.get_data(),locations,w_size)
+        out.append(count_gray(data))
+    return out
+
+def count_gray(data):
+    out = []
+    for d in data:
+        count = 0
+        i = d.flatten()
+        for w in i:
+            if GRAY__MIN < w < GRAY__MAX:
+                count += 1 
+    out.append(count)
+    return out
 
 def get_clusters(w_size=10, thresh=0, training=True):
     tag = "train" if training else "test"
@@ -60,11 +80,12 @@ def get_clusters(w_size=10, thresh=0, training=True):
 def get_cluster_areas(w_size=10, thresh=0, training=True):
     inputs = load_samples_inputs(training)
     correlation = get_window_age_correlating(w_size)
-    locations = local_max_loactions(correlation, w_size, thresh) 
+    locations = local_max_locations(correlation, w_size, thresh) 
     return [compute_cluster_areas(i.get_data(),locations,w_size) for i in inputs]
 
-def local_max_loactions(data, w_size=10, thresh=0):
-    cache_path = os.path.join(CURRENT_DIRECTORY,"..","cache","local_max_loactions.mat")
+
+def local_max_locations(data, w_size=10, thresh=0):
+    cache_path = os.path.join(CURRENT_DIRECTORY,"..","cache","local_max_locations.mat")
     if os.path.exists(cache_path):
         out = scipy.io.loadmat(cache_path)['out']
     else:
@@ -104,7 +125,7 @@ def window_age_correlation_compute(w_size=10):
 
     inputs = [i.get_data() for i in training_inputs]
 
-    steps = 2
+    steps = 1
 
     l_x = len(inputs[0][:,0,0,0])-w_size
     l_y = len(inputs[0][0,:,0,0])-w_size
@@ -125,11 +146,11 @@ def window_age_correlation_compute(w_size=10):
 
         vs = []
         for i in inputs:
-            mean = 0
+            count = 0
             for w in itertools.product(w_range,w_range,w_range):
-                mean += i[c[0]+w[0],c[1]+w[1],c[2]+w[2],0]
-            mean /= w_size**3
-            vs.append(mean)
+                if GRAY__MIN < i[c[0]+w[0],c[1]+w[1],c[2]+w[2],0] < GRAY__MAX:
+                    count += 1 
+            vs.append(count)
 
         slope, intercept, r, p, std = linregress(ages, vs)
         slopes.append(slope)
