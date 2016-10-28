@@ -18,16 +18,19 @@ from .settings import CURRENT_DIRECTORY
 from .squared_error import squared_error
 
 def simple_ratio():
+    cuts = [[[25,-25],[20,-20],[70,-20]],
+            [[25,-25],[100,-20],[70,-20]]]
+
     y = load_targets()['Y'].tolist()
     train = load_samples_inputs(True)
     test = load_samples_inputs(False)
-    ratios_train = np.array(list(map(get_ratios,train)))    
+    ratios_train = np.array([np.array(list(map(lambda x: get_ratios(t,x), cuts))).flatten() for t in train])
     print(np.shape(ratios_train))
-    ratios_test = np.array(list(map(get_ratios,test)))
+    ratios_test = np.array([np.array(list(map(lambda x: get_ratios(t,x), cuts))).flatten() for t in test])
     print(np.shape(ratios_test))
-    train_dict = ratio_dict(ratios_train)
-    for i in train_dict.keys():
-        plot(train_dict[i],y,i,i)
+    #train_dict = ratio_dict(ratios_train)
+    #for i in train_dict.keys():
+    #    plot(train_dict[i],y,i,i)
 
     clf = LinearRegression()
     predicted = cross_val_predict(clf,ratios_train,y,cv=5)
@@ -43,8 +46,8 @@ def ratio_dict(ratios):
     comb_names = ['low-gray','low-white','zeros-gray','zeros-low','gray-white','gray','low']
     return {comb_names[i]:ratios.transpose()[i] for i in range(len(comb_names))}
 
-def get_ratios(data):
-    data = data.get_data()[25:-25,20:-20,70:-20,0]
+def get_ratios(data, c):
+    data = data.get_data()[c[0][0]:c[0][1],c[1][0]:c[1][1],c[2][0]:c[2][1],0]
 
     zeros = count_zero(data)
     low = count_range(data,[10,400])
@@ -56,7 +59,7 @@ def get_ratios(data):
     ratios = list(map(lambda x: x[1]/x[0], combs))
     ratios.append(gray)
     ratios.append(low)
-    return np.array(ratios )
+    return np.array(ratios)
 
 def count_zero(data):
     return np.count_nonzero(np.logical_not(data>0))
