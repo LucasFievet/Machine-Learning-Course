@@ -8,7 +8,7 @@ from app.heatmap import heatmap
 from app.locations_3Dplot import locations_3D
 from app.predictor_cluster import predict_cluster
 from app.heatmap_side import heatmap_side
-from app.experimental import scan_volume
+from app.submission import submission_predictor
 from app.ridge_predict import ridge_predict
 from app.simple_ratio import simple_ratio
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         elif args[1] == "locations_3D":
             locations_3D()
         elif args[1] == "scan_volume":
-            scan_volume()
+            submission_predictor()
         elif args[1] == "ridge":
             ridge_predict() 
         elif args[1] == "predict_cluster2":
