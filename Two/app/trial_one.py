@@ -3,13 +3,17 @@
 import os
 import warnings
 
+import itertools
+
 import numpy as np
 import pandas as pd
 
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cross_validation import cross_val_score
 from sklearn.metrics import log_loss, make_scorer
 
@@ -54,8 +58,8 @@ def submission_predictor():
 
     # Load the test inputs
     test_inputs = load_samples_inputs(False)
-    test_inputs = pre_process(test_inputs)
-    test_inputs = [binarize(i, bins) for i in test_inputs]
+    test_inputs = pre_process(test_inputs, bins)
+    # test_inputs = [binarize(i, bins) for i in test_inputs]
 
     print("Make an overall prediction for the test inputs")
 
@@ -77,10 +81,9 @@ def submission_predictor():
     df.to_csv(prediction_path, index=False)
 
 
-class Predictor:
-    def __init__(self, p0, p1):
-        self.p0 = p0
-        self.p1 = p1
+class PredictorMeanProbability:
+    def __init__(self):
+        pass
 
     def fit(self, x, y):
         pass
@@ -98,7 +101,9 @@ class PredictorWrapper:
 
     def predict(self, *args, **kwargs):
         test_predicted = self.predictor.predict_proba(*args, **kwargs)
-        return [p[1] for p in test_predicted]
+        test_predicted = [p[1] for p in test_predicted]
+        test_predicted = [1.0 if p > 0.95 else p for p in test_predicted]
+        return test_predicted
 
 
 def cross_val_predict_data(inputs, healthy, bins):
@@ -110,28 +115,30 @@ def cross_val_predict_data(inputs, healthy, bins):
     :return: Sklearn predictor
     """
 
-    print(healthy)
-    p0 = float(len(list(filter(lambda x: x < 0.5, healthy))))/len(healthy)
-    p1 = float(len(list(filter(lambda x: x > 0.5, healthy))))/len(healthy)
-    print(p0)
-    print(p1)
-    # raise ""
-
     # Make a histogram of 7 even bins for each brain scan
-    inputs = pre_process(inputs)
-    inputs = [binarize(i, bins) for i in inputs]
-    # inputs = range(0, 278)
+    inputs = pre_process(inputs, bins)
+    # inputs = [binarize(i, bins) for i in inputs]
 
+    # for k, a in itertools.product(range(10, 11, 1), ["tanh"]):
+    #     print("%s: %s" % (k, a))
     # Create the pipeline for a linear regression
     # on features of second order polynomials
     predictor = Pipeline([
         ('poly', PolynomialFeatures(degree=2)),
+        # ('linear', PredictorWrapper(MLPClassifier(hidden_layer_sizes=(k, k, k, k), activation=a)))
         ('linear', PredictorWrapper(LogisticRegression()))
     ])
 
     # Cross validated prediction
-    scores = cross_val_score(predictor, inputs, healthy, scoring=make_scorer(log_loss), cv=4, n_jobs=4)
-    print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+    scores = cross_val_score(
+        predictor,
+        inputs,
+        healthy,
+        scoring=make_scorer(log_loss),
+        cv=4,
+        n_jobs=4
+    )
+    print("Log Loss: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
     # Fit the predictor with the training data for later use
     predictor.fit(inputs, healthy)
@@ -151,14 +158,46 @@ def binarize(i, bins):
     hist, edges = np.histogram(i, bins=bins, range=[100, 1600], normed=True)
     edges = (edges[:-1] + edges[1:])/2
     hist *= edges
+
     return hist
 
 
-def pre_process(data):
+def pre_process(data, bins):
     """
     Flatten the brain scans to a 1D numpy array
     :param data: List of 3D memory map
     :return: List of 1D numpy arrays
     """
 
-    return np.array([i.get_data()[:, :, :, 0].flatten() for i in data])
+    lx = len(data[0].get_data()[:, 0, 0, 0])
+    ly = len(data[0].get_data()[0, :, 0, 0])
+    lz = len(data[0].get_data()[0, 0, :, 0])
+
+    x_intervals = generate_intervals(lx, 2)
+    y_intervals = generate_intervals(ly, 1)
+    z_intervals = generate_intervals(lz, 1)
+
+    print(x_intervals)
+    print(y_intervals)
+    print(z_intervals)
+
+    inputs = []
+    for i in data:
+        features = np.array([])
+        for ix, iy, iz in itertools.product(x_intervals, y_intervals, z_intervals):
+            features = np.concatenate((features, binarize(
+                i.get_data()[ix[0]:ix[1], iy[0]:iy[1], iz[0]:iz[1], 0].flatten(),
+                bins
+            )))
+
+        inputs.append(features)
+
+    return np.array(inputs)
+
+
+def generate_intervals(l, n):
+    step = int(l/n)
+    return [
+        (i1, i2)
+        for i1, i2 in zip(range(0, l, step), range(step, l+1, step))
+    ]
