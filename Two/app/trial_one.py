@@ -4,12 +4,12 @@ import os
 import warnings
 
 import numpy as np
-import nibabel as ni
 import pandas as pd
 
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
 from sklearn.cross_validation import cross_val_score
 from sklearn.metrics import log_loss, make_scorer
 
@@ -42,49 +42,25 @@ def submission_predictor():
     # Load the training inputs and targets
     training_inputs = load_samples_inputs()
     data = load_targets()
+    bins = 10
 
     # Extract the target ages from the data
     healthy = data["Y"].tolist()
 
-    # print("Create young and old subsets")
-
-    # Compute subsets of samples of young and old
-    # young_inputs, young_ages = filter_samples(training_inputs, ages, 0, 60)
-    # old_inputs, old_ages = filter_samples(training_inputs, ages, 60, 100)
-
-    # print("Make a cross validated prediction for each age group")
-
     # Make a cross validated prediction for each age group
-    predictor_all = cross_val_predict_data(training_inputs, healthy, "all")
-    # predictor_young = cross_val_predict_data(young_inputs, young_ages, "young")
-    # predictor_old = cross_val_predict_data(old_inputs, old_ages, "old")
+    predictor_all = cross_val_predict_data(training_inputs, healthy, bins)
 
     print("Load the test inputs")
 
     # Load the test inputs
     test_inputs = load_samples_inputs(False)
     test_inputs = pre_process(test_inputs)
-    test_inputs = [binarize(i, 7) for i in test_inputs]
+    test_inputs = [binarize(i, bins) for i in test_inputs]
 
     print("Make an overall prediction for the test inputs")
 
     # Make an overall prediction for each test input
     test_predicted = predictor_all.predict(test_inputs)
-
-    print("Refine predictions per age group")
-
-    # Refine the prediction for each age group
-    # for idx, p in enumerate(test_predicted):
-    #     data_idx = test_inputs[idx]
-    #     if p < 50:
-    #         refined_prediction = predictor_young.predict(data_idx)
-    #         test_predicted[idx] = refined_prediction
-    #     if p >= 60:
-    #         refined_prediction = predictor_old.predict(data_idx)
-    #         test_predicted[idx] = refined_prediction
-
-    # Make sure no prediction is below 18
-    # test_predicted = [19 if p < 18 else p for p in test_predicted]
 
     print("Write prediction to predictions.csv")
 
@@ -101,59 +77,52 @@ def submission_predictor():
     df.to_csv(prediction_path, index=False)
 
 
-# def filter_samples(inputs, ages, age_min, age_max):
-#     """
-#     Create a subset of training samples for the given age range
-#     :param inputs: List of inputs
-#     :param ages: List of matching ages
-#     :param age_min: Min age
-#     :param age_max: Max age
-#     :return: Lists of filtered inputs and ages
-#     """
-#
-#     filtered_inputs = []
-#     filtered_ages = []
-#     for input_data, age in zip(inputs, ages):
-#         if age_min < age <= age_max:
-#             filtered_inputs.append(input_data)
-#             filtered_ages.append(age)
-#
-#     return filtered_inputs, filtered_ages
+class Predictor:
+    def __init__(self, p0, p1):
+        self.p0 = p0
+        self.p1 = p1
+
+    def fit(self, x, y):
+        pass
+
+    def predict(self, x):
+        return [0.75 for _ in range(0, len(x))]
 
 
-def cross_val_predict_data(inputs, ages, tag="all"):
+def cross_val_predict_data(inputs, healthy, bins):
     """
     Make a cross validated prediction for the given inputs and ages
     :param inputs: The brain scans
-    :param ages: The ages
+    :param healthy: The ages
     :param tag: Group tag
     :return: Sklearn predictor
     """
 
+    print(healthy)
+    p0 = float(len(list(filter(lambda x: x < 0.5, healthy))))/len(healthy)
+    p1 = float(len(list(filter(lambda x: x > 0.5, healthy))))/len(healthy)
+    print(p0)
+    print(p1)
+    # raise ""
+
     # Make a histogram of 7 even bins for each brain scan
-    bins = 7
     inputs = pre_process(inputs)
     inputs = [binarize(i, bins) for i in inputs]
+    # inputs = range(0, 278)
 
     # Create the pipeline for a linear regression
     # on features of second order polynomials
     predictor = Pipeline([
         ('poly', PolynomialFeatures(degree=2)),
-        ('linear', LinearSVC(fit_intercept=False))
+        ('linear', Predictor(p0, p1))
     ])
 
     # Cross validated prediction
-    scores = cross_val_score(predictor, inputs, ages, scoring=make_scorer(log_loss), cv=4, n_jobs=4)
+    scores = cross_val_score(predictor, inputs, healthy, scoring=make_scorer(log_loss), cv=4, n_jobs=4)
     print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
-    # Output the MSE
-    # print("{}: mse={}".format(
-    #     tag,
-    #     mean_squared_error(ages, predicted)
-    # ))
-
     # Fit the predictor with the training data for later use
-    predictor.fit(inputs, ages)
+    predictor.fit(inputs, healthy)
 
     return predictor
 
