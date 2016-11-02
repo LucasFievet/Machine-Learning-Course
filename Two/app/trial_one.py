@@ -89,6 +89,18 @@ class Predictor:
         return [0.75 for _ in range(0, len(x))]
 
 
+class PredictorWrapper:
+    def __init__(self, predictorInstance):
+        self.predictor = predictorInstance
+
+    def fit(self, *args, **kwargs):
+        self.predictor.fit(*args, **kwargs)
+
+    def predict(self, *args, **kwargs):
+        test_predicted = self.predictor.predict_proba(*args, **kwargs)
+        return [p[1] for p in test_predicted]
+
+
 def cross_val_predict_data(inputs, healthy, bins):
     """
     Make a cross validated prediction for the given inputs and ages
@@ -114,7 +126,7 @@ def cross_val_predict_data(inputs, healthy, bins):
     # on features of second order polynomials
     predictor = Pipeline([
         ('poly', PolynomialFeatures(degree=2)),
-        ('linear', Predictor(p0, p1))
+        ('linear', PredictorWrapper(LogisticRegression()))
     ])
 
     # Cross validated prediction
