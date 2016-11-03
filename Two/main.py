@@ -2,10 +2,12 @@
 
 import sys
 import os
+import numpy as np
 from time import strftime
 
 from app.trial_one import submission_predictor
 from app.healthy_sick_comparison import healthy_sick_comparison
+from app.reduce_histogram import ReduceHistogram 
 
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
@@ -28,3 +30,6 @@ if __name__ == "__main__":
             submission_predictor()
         if args[1] == "healthy_sick_comparison":
             healthy_sick_comparison()
+        if args[1] == "reduce_histogram":
+            r = ReduceHistogram(10,20)
+            print(np.shape(r.get_reduced(0,'train')))
