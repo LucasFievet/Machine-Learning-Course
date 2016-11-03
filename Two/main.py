@@ -5,6 +5,7 @@ import os
 from time import strftime
 
 from app.trial_one import submission_predictor
+from app.healthy_sick_comparison import healthy_sick_comparison
 
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
@@ -25,3 +26,5 @@ if __name__ == "__main__":
     else:
         if args[1] == "trial_one":
             submission_predictor()
+        if args[1] == "healthy_sick_comparison":
+            healthy_sick_comparison()

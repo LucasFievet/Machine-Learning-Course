@@ -10,16 +10,13 @@ import pandas as pd
 
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.cross_validation import cross_val_score
+from sklearn.cross_validation import cross_val_score, cross_val_predict
 from sklearn.metrics import log_loss, make_scorer
 
 from .load_data import load_samples_inputs, load_targets
 
-from .settings import CURRENT_DIRECTORY, DATA_DIRECTORY
+from .settings import CURRENT_DIRECTORY, CACHE_DIRECTORY
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -49,16 +46,22 @@ def submission_predictor():
     bins = 10
 
     # Extract the target ages from the data
-    healthy = data["Y"].tolist()
+    health = data["Y"].tolist()
+
+    print("Create better labels")
+
+    labels = cross_val_label(training_inputs, health, bins)
+
+    print("Make a cross validated prediction")
 
     # Make a cross validated prediction for each age group
-    predictor_all = cross_val_predict_data(training_inputs, healthy, bins)
+    predictor_all = cross_val_predict_data(training_inputs, labels, bins)
 
     print("Load the test inputs")
 
     # Load the test inputs
     test_inputs = load_samples_inputs(False)
-    test_inputs = pre_process(test_inputs, bins)
+    test_inputs = extract_features_regions(test_inputs, bins)
     # test_inputs = [binarize(i, bins) for i in test_inputs]
 
     print("Make an overall prediction for the test inputs")
@@ -101,39 +104,42 @@ class PredictorWrapper:
 
     def predict(self, *args, **kwargs):
         test_predicted = self.predictor.predict_proba(*args, **kwargs)
-        test_predicted = [p[1] for p in test_predicted]
+        test_predicted = [
+            p[1] if len(p) == 2 else p[2] + p[3]
+            for p in test_predicted
+        ]
         test_predicted = [1.0 if p > 0.95 else p for p in test_predicted]
         return test_predicted
 
 
-def cross_val_predict_data(inputs, healthy, bins):
+def cross_val_predict_data(inputs, health, bins):
     """
     Make a cross validated prediction for the given inputs and ages
     :param inputs: The brain scans
-    :param healthy: The ages
+    :param health: The ages
     :param tag: Group tag
     :return: Sklearn predictor
     """
 
-    # Make a histogram of 7 even bins for each brain scan
-    inputs = pre_process(inputs, bins)
-    # inputs = [binarize(i, bins) for i in inputs]
+    print("Extract features")
 
-    # for k, a in itertools.product(range(10, 11, 1), ["tanh"]):
-    #     print("%s: %s" % (k, a))
+    # Make a histogram of 7 even bins for each brain scan
+    inputs = extract_features_regions(inputs, bins)
+
     # Create the pipeline for a linear regression
     # on features of second order polynomials
     predictor = Pipeline([
         ('poly', PolynomialFeatures(degree=2)),
-        # ('linear', PredictorWrapper(MLPClassifier(hidden_layer_sizes=(k, k, k, k), activation=a)))
         ('linear', PredictorWrapper(LogisticRegression()))
     ])
+
+    print("Compute cross validated score")
 
     # Cross validated prediction
     scores = cross_val_score(
         predictor,
         inputs,
-        healthy,
+        health,
         scoring=make_scorer(log_loss),
         cv=4,
         n_jobs=4
@@ -141,28 +147,71 @@ def cross_val_predict_data(inputs, healthy, bins):
     print("Log Loss: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
     # Fit the predictor with the training data for later use
-    predictor.fit(inputs, healthy)
+    predictor.fit(inputs, health)
 
     return predictor
 
 
-def binarize(i, bins):
+def cross_val_label(inputs, health, bins):
     """
-    Create evenly spaced bins in the meaningful range
-    Weight each bin by its average value
-    :param i: Inputs
-    :param bins: Bins
-    :return: Weighted bin values
+    Make a cross validated prediction for the given inputs and ages
+    :param inputs: The brain scans
+    :param health: The ages
+    :param bins: Number bins
+    :return: Sklearn predictor
     """
 
-    hist, edges = np.histogram(i, bins=bins, range=[100, 1600], normed=True)
-    edges = (edges[:-1] + edges[1:])/2
-    hist *= edges
+    print("Extract features")
 
-    return hist
+    # Make a histogram of 7 even bins for each brain scan
+    inputs = extract_features_regions(inputs, bins)
+
+    # Create the pipeline for a linear regression
+    # on features of second order polynomials
+    predictor = Pipeline([
+        ('poly', PolynomialFeatures(degree=2)),
+        ('linear', PredictorWrapper(LogisticRegression()))
+    ])
+
+    print("Compute cross validate predict")
+
+    r = cross_val_predict(
+        predictor,
+        inputs,
+        health,
+        cv=4,
+        n_jobs=4
+    ) - health
+
+    import matplotlib.pyplot as plt
+    plt.figure()
+    plt.hist(
+        r,
+        bins=20,
+        normed=False,
+        facecolor='green',
+        alpha=0.75
+    )
+
+    plt.xlabel('Error')
+    plt.ylabel('Count')
+    plt.title(r'$\mathrm{Prediction Error}$')
+    plt.grid(True)
+    plt.savefig("plots/{}.pdf".format("hist"))
+
+    labels = []
+    for h, p in zip(health, r):
+        if h == 0 and p > 0.25:
+            labels.append(-1)
+        elif h == 1 and p < -0.25:
+            labels.append(2)
+        else:
+            labels.append(h)
+
+    return labels
 
 
-def pre_process(data, bins):
+def extract_features_hypercubes(data, bins):
     """
     Flatten the brain scans to a 1D numpy array
     :param data: List of 3D memory map
@@ -193,6 +242,55 @@ def pre_process(data, bins):
         inputs.append(features)
 
     return np.array(inputs)
+
+
+def extract_features_regions(data, bins):
+    """
+    Flatten the brain scans to a 1D numpy array
+    :param data: List of 3D memory map
+    :return: List of 1D numpy arrays
+    """
+
+    region_indices = []
+    region_path = os.path.join(
+        CACHE_DIRECTORY,
+        "region_cache.hdf"
+    )
+    for l in range(0, 1):
+        df = pd.read_hdf(region_path.replace(".hdf", "-%s.hdf" % l), "table")
+        region_indices.append(df[l].tolist())
+        print(len(df))
+
+    inputs = []
+    for i in data:
+        flat_data_i = i.get_data().flatten()
+
+        features = np.array([])
+        for r in region_indices:
+            features = np.concatenate((features, binarize(
+                flat_data_i,
+                bins
+            )))
+
+        inputs.append(features)
+
+    return np.array(inputs)
+
+
+def binarize(i, bins):
+    """
+    Create evenly spaced bins in the meaningful range
+    Weight each bin by its average value
+    :param i: Inputs
+    :param bins: Bins
+    :return: Weighted bin values
+    """
+
+    hist, edges = np.histogram(i, bins=bins, range=[100, 1600], normed=True)
+    edges = (edges[:-1] + edges[1:])/2
+    hist *= edges
+
+    return hist
 
 
 def generate_intervals(l, n):
