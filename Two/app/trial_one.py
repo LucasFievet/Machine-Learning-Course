@@ -43,7 +43,7 @@ def submission_predictor():
     # Load the training inputs and targets
     training_inputs = load_samples_inputs()
     data = load_targets()
-    bins = 10
+    bins = 12
 
     # Extract the target ages from the data
     health = data["Y"].tolist()
@@ -55,7 +55,7 @@ def submission_predictor():
     print("Make a cross validated prediction")
 
     # Make a cross validated prediction for each age group
-    predictor_all = cross_val_predict_data(training_inputs, labels, bins)
+    predictor_all = cross_val_predict_data(training_inputs, labels, health, bins)
 
     print("Load the test inputs")
 
@@ -104,15 +104,32 @@ class PredictorWrapper:
 
     def predict(self, *args, **kwargs):
         test_predicted = self.predictor.predict_proba(*args, **kwargs)
-        test_predicted = [
-            p[1] if len(p) == 2 else p[2] + p[3]
-            for p in test_predicted
-        ]
+        test_predicted = [p[1] for p in test_predicted]
         test_predicted = [1.0 if p > 0.95 else p for p in test_predicted]
         return test_predicted
 
 
-def cross_val_predict_data(inputs, health, bins):
+class PredictorWrapper2:
+    def __init__(self, predictorInstance):
+        self.predictor = predictorInstance
+
+    def fit(self, *args, **kwargs):
+        self.predictor.fit(*args, **kwargs)
+
+    def predict(self, *args, **kwargs):
+        test_predicted = self.predictor.predict_proba(*args, **kwargs)
+        # print(test_predicted)
+        test_predicted = [
+            p[2] + p[3]
+            for p in test_predicted
+        ]
+        test_predicted = [1.0 if p > 0.95 else p for p in test_predicted]
+        # test_predicted = [0.75 if 0.5 < p < 0.9 else p for p in test_predicted]
+        # test_predicted = [0.0 if p < 0.3 else p for p in test_predicted]
+        return test_predicted
+
+
+def cross_val_predict_data(inputs, labels, health, bins):
     """
     Make a cross validated prediction for the given inputs and ages
     :param inputs: The brain scans
@@ -130,24 +147,27 @@ def cross_val_predict_data(inputs, health, bins):
     # on features of second order polynomials
     predictor = Pipeline([
         ('poly', PolynomialFeatures(degree=2)),
-        ('linear', PredictorWrapper(LogisticRegression()))
+        ('linear', PredictorWrapper2(LogisticRegression()))
     ])
 
     print("Compute cross validated score")
 
     # Cross validated prediction
-    scores = cross_val_score(
+    predicted = cross_val_predict(
         predictor,
         inputs,
-        health,
-        scoring=make_scorer(log_loss),
+        labels,
+        # scoring=make_scorer(log_loss),
         cv=4,
         n_jobs=4
     )
-    print("Log Loss: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+    loss = log_loss(health, predicted)
+    print(predicted)
+    print(loss)
+    # print("Log Loss: %0.3f (+/- %0.3f)" % (scores.mean(), scores.std() * 2))
 
     # Fit the predictor with the training data for later use
-    predictor.fit(inputs, health)
+    predictor.fit(inputs, labels)
 
     return predictor
 
@@ -256,7 +276,7 @@ def extract_features_regions(data, bins):
         CACHE_DIRECTORY,
         "region_cache.hdf"
     )
-    for l in range(0, 1):
+    for l in range(2, 3):
         df = pd.read_hdf(region_path.replace(".hdf", "-%s.hdf" % l), "table")
         region_indices.append(df[l].tolist())
         print(len(df))
@@ -286,7 +306,7 @@ def binarize(i, bins):
     :return: Weighted bin values
     """
 
-    hist, edges = np.histogram(i, bins=bins, range=[100, 1600], normed=True)
+    hist, edges = np.histogram(i, bins=bins, range=[10, 2000], normed=True)
     edges = (edges[:-1] + edges[1:])/2
     hist *= edges
 
