@@ -8,6 +8,7 @@ from time import strftime
 from app.trial_one import submission_predictor
 from app.healthy_sick_comparison import healthy_sick_comparison
 from app.reduce_histogram import ReduceHistogram 
+from app.find_features import FindFeatures
 
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
@@ -32,4 +33,6 @@ if __name__ == "__main__":
             healthy_sick_comparison()
         if args[1] == "reduce_histogram":
             r = ReduceHistogram(10,20)
-            print(np.shape(r.get_reduced(0,'train')))
+        if args[1] == "ff":
+            f = FindFeatures()
+            f.test()
