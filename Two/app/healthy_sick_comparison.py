@@ -76,15 +76,15 @@ def healthy_sick_comparison():
     plt.imshow(corr, origin='lower')
 
     plot_path = os.path.join(
-        PLOT_DIRECTORY,
-        "heatmap.pdf"
-    )
+            PLOT_DIRECTORY,
+            "heatmap.pdf"
+            )
     plt.savefig(plot_path)
 
     region_path = os.path.join(
-        CACHE_DIRECTORY,
-        "region_cache.hdf"
-    )
+            CACHE_DIRECTORY,
+            "region_cache.hdf"
+            )
     for l in range(0, 4):
         l_sick = np.array(indices)[np.array(cluster.labels_) == l]
         l_indices = reduce(np.union1d, l_sick)
@@ -104,10 +104,10 @@ def get_sick_indices(means, stds, sick):
     indices_up = np.logical_and(means + t*stds < sick, sick <= 1600)
     indices_down = np.logical_and(sick < means - t*stds, sick >= 100)
     print("{}: {}/{}".format(
-        6,
-        np.sum(indices_up),
-        np.sum(indices_down)
-    ))
+            6,
+            np.sum(indices_up),
+            np.sum(indices_down)
+            ))
 
     indices = np.logical_or(indices_up, indices_down)
     return np.where(indices)[0]
@@ -115,9 +115,9 @@ def get_sick_indices(means, stds, sick):
 
 def get_stds(inputs):
     inputs = [
-        np.minimum(np.array(i.get_data()[:, :, :, 0].flatten()), 1600)
-        for i in inputs
-    ]
+            np.minimum(np.array(i.get_data()[:, :, :, 0].flatten()), 1600)
+            for i in inputs
+            ]
 
     means = np.mean(inputs, axis=0)
     stds = np.std(inputs, axis=0)

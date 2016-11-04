@@ -30,21 +30,21 @@ def load_sample_input(id=1, training=True):
     tag = "train" if training else "test"
 
     file_path = os.path.join(
-        DATA_DIRECTORY,
-        "set_{}".format(tag),
-        "{}_{}.nii".format(tag, id)
-    )
+            DATA_DIRECTORY,
+            "set_{}".format(tag),
+            "{}_{}.nii".format(tag, id)
+            )
 
     return ni.load(file_path)
 
 
 def load_targets(training=True):
     targets_path = os.path.join(
-        DATA_DIRECTORY,
-        "targets.csv"
-    )
+            DATA_DIRECTORY,
+            "targets.csv"
+            )
     return pd.read_csv(
-        targets_path,
-        header=None,
-        names=["Y"]
-    )
+            targets_path,
+            header=None,
+            names=["Y"]
+            )
