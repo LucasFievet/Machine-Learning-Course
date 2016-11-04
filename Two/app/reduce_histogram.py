@@ -59,9 +59,8 @@ class ReduceHistogram:
 
     def __save_reduced(self, data, ID, typ):
         DIR = self.__train_path if typ is 'train' else self.__test_path        
-        df = pd.DataFrame(data)
         FILE = os.path.join(DIR, '{}_{}.hdf'.format(typ, ID))
-        df.to_hdf(FILE, 'table')
+        pd.DataFrame(data).to_hdf(FILE, 'table')
 
     def __reduce(self, data):
         out = [] 
