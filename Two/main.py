@@ -3,7 +3,7 @@
 import sys
 import os
 import numpy as np
-from time import strftime
+import time
 
 from app.trial_one import submission_predictor
 from app.healthy_sick_comparison import healthy_sick_comparison
@@ -13,7 +13,9 @@ from app.find_features import FindFeatures
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY, ITERATE_DIRECTORY
 
 if __name__ == "__main__":
-    print(strftime("%Y-%m-%d %H:%M:%S"))
+    start_time = time.time()
+    print(time.strftime("%Y-%m-%d %H:%M:%S"))
+
     if not os.path.exists(CACHE_DIRECTORY):
         os.makedirs(CACHE_DIRECTORY)
 
@@ -36,3 +38,5 @@ if __name__ == "__main__":
         if args[1] == "ff":
             f = FindFeatures()
             f.test()
+
+    print("Program execution took %s seconds" %round(time.time() - start_time, 3))
