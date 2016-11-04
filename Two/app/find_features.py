@@ -24,7 +24,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class FindFeatures():
 
-    def __init__(self, bins=10, size=50):
+    def __init__(self, bins=10, size=20):
         data = ReduceHistogram(bins, size).get_reduced_set('train')
         self.__data = np.transpose(data, (2,1,0))
         self.__targets = load_targets()['Y'].tolist()
@@ -38,7 +38,8 @@ class FindFeatures():
             intervals = (range(shape[0]), range(shape[1]))
             evaluated = [self.__eval_fun(self.__data[x,y,:]) 
                     for x, y in itertools.product(*intervals)]
-            self.__evaluated = np.array(evaluated).reshape(shape[0], shape[1], 4)
+            l = len(self.__eval_fun(self.__data[0,0,:]))
+            self.__evaluated = np.array(evaluated).reshape(shape[0], shape[1], l)
             scipy.io.savemat(FILE, mdict={'data': self.__evaluated}, oned_as='row')
         print('shape of evaluated data:', np.shape(self.__evaluated))
 
