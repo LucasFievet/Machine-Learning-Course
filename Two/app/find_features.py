@@ -65,7 +65,7 @@ class FindFeatures():
             x_range = range(len(data[0, :]))
             plt.figure() 
             plt.errorbar(x_range, np.fabs(data[0, :]-data[2, :]), np.sqrt(np.fabs(data[1, :]-data[3, :])),
-                         linestyle='None', marker='*')
+                         linestyle='None', marker='*', markersize=2.0, linewidth=0.7, capsize=1)
 
         pdf = backend_pdf.PdfPages("plot_mean_var.pdf")
         for fig in range(1, plt.figure().number): ## will open an empty extra figure :(
