@@ -6,9 +6,9 @@ import itertools
 
 import scipy.io
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from matplotlib.backends import backend_pdf
 
 from sklearn.preprocessing import PolynomialFeatures
@@ -19,7 +19,7 @@ from sklearn.metrics import log_loss, make_scorer
 
 from .load_data import load_targets
 
-from .settings import CACHE_DIRECTORY
+from .settings import CACHE_DIRECTORY, PLOT_DIRECTORY
 from .reduce_histogram import ReduceHistogram
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -31,6 +31,7 @@ class FindFeatures():
         self.__data = np.transpose(data, (2, 1, 0))
         self.__targets = load_targets()['Y'].tolist()
         self.__evaluated = np.array([])
+        self.__evaluate_features()
 
     def __evaluate_features(self):
         file_path = os.path.join(CACHE_DIRECTORY, 'evaluate_features.mat')
@@ -63,15 +64,49 @@ class FindFeatures():
         for i in range(length):
             data = self.__evaluated[i, :, :].transpose()
             x_range = range(len(data[0, :]))
-            plt.figure() 
-            plt.errorbar(x_range, np.fabs(data[0, :]-data[2, :]), np.sqrt(np.fabs(data[1, :]-data[3, :])),
-                         linestyle='None', marker='*', markersize=2.0, linewidth=0.7, capsize=1)
-
-        pdf = backend_pdf.PdfPages("plot_mean_var.pdf")
-        for fig in range(1, plt.figure().number): ## will open an empty extra figure :(
-            pdf.savefig( fig )
+            plt.figure(num=i+1)
+            plt.errorbar(x_range, np.fabs(data[0, :]-data[2, :]), 
+                         np.sqrt(np.fabs(data[1, :]-data[3, :])),
+                         linestyle='None', marker='*', markersize=2.0,
+                         linewidth=0.7, capsize=1)
+        path = os.path.join(PLOT_DIRECTORY, "plot_mean_var.pdf")
+        pdf = backend_pdf.PdfPages(path)
+        for fig in range(1, plt.figure().number):
+            pdf.savefig(fig)
+        plt.close('all')
         pdf.close()
 
-    def test(self):
-        ' DOC '
-        self.__evaluate_features()
+    def plot_mean(self):
+        """TODO: Docstring for plot_mean.
+        """
+        length = len(self.__evaluated[:, 0, 0])
+        for i in range(length):
+            data = self.__evaluated[i, :, :].transpose()
+            x_range = range(len(data[0, :]))
+            plt.figure(num=i+1)
+            plt.plot(x_range, np.fabs(data[0, :]-data[2, :]))
+                        
+        path = os.path.join(PLOT_DIRECTORY, "plot_mean.pdf")
+        pdf = backend_pdf.PdfPages(path)
+        for fig in range(1, plt.figure().number):
+            pdf.savefig(fig)
+        plt.close('all')
+        pdf.close()
+
+    def plot_var(self):
+        """TODO: Docstring for plot_var.
+        """
+        length = len(self.__evaluated[:, 0, 0])
+        for i in range(length):
+            data = self.__evaluated[i, :, :].transpose()
+            x_range = range(len(data[0, :]))
+            plt.figure(num=i+1)
+            plt.scatter(x_range, np.fabs(data[1, :]), s=3, c='r', marker='*', edgecolors='none')
+            plt.scatter(x_range, np.fabs(data[3, :]), s=3, c='b', marker='^', edgecolors='none')
+                        
+        path = os.path.join(PLOT_DIRECTORY, "plot_var.pdf")
+        pdf = backend_pdf.PdfPages(path)
+        for fig in range(1, plt.figure().number):
+            pdf.savefig(fig)
+        plt.close('all')
+        pdf.close()
