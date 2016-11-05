@@ -34,9 +34,10 @@ if __name__ == "__main__":
         if args[1] == "healthy_sick_comparison":
             healthy_sick_comparison()
         if args[1] == "reduce_histogram":
-            r = ReduceHistogram(10,20)
+            r = ReduceHistogram(10, 20)
         if args[1] == "ff":
             f = FindFeatures()
             f.test()
+            f.plot_mean_var()
 
     print("Program execution took %s seconds" %round(time.time() - start_time, 3))

@@ -2,12 +2,14 @@
 
 import os
 import warnings
-
 import itertools
 
+import scipy.io
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.io
+from matplotlib.backends import backend_pdf
 
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
@@ -23,11 +25,12 @@ from .reduce_histogram import ReduceHistogram
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class FindFeatures():
-
+    " TODO doc "
     def __init__(self, bins=10, size=20):
         data = ReduceHistogram(bins, size).get_reduced_set('train')
-        self.__data = np.transpose(data, (2,1,0))
+        self.__data = np.transpose(data, (2, 1, 0))
         self.__targets = load_targets()['Y'].tolist()
+        self.__evaluated = np.array([])
 
     def __evaluate_features(self):
         file_path = os.path.join(CACHE_DIRECTORY, 'evaluate_features.mat')
@@ -37,9 +40,9 @@ class FindFeatures():
             shape = self.__data[:, :, 0].shape
             intervals = (range(shape[0]), range(shape[1]))
             evaluated = [self.__eval_fun(self.__data[x, y, :])
-                    for x, y in itertools.product(*intervals)]
-            l = len(self.__eval_fun(self.__data[0, 0, :]))
-            self.__evaluated = np.array(evaluated).reshape(shape[0], shape[1], l)
+                         for x, y in itertools.product(*intervals)]
+            length = len(self.__eval_fun(self.__data[0, 0, :]))
+            self.__evaluated = np.array(evaluated).reshape(shape[0], shape[1], length)
             scipy.io.savemat(file_path, mdict={'data': self.__evaluated}, oned_as='row')
         print('shape of evaluated data:', np.shape(self.__evaluated))
 
@@ -53,5 +56,22 @@ class FindFeatures():
         healthy_var = np.var(healthy)
         return np.array([sick_mean, sick_var, healthy_mean, healthy_var])
 
+    def plot_mean_var(self):
+        """TODO: Docstring for plot_mean_var.
+        """
+        length = len(self.__evaluated[:, 0, 0])
+        for i in range(length):
+            data = self.__evaluated[i, :, :].transpose()
+            x_range = range(len(data[0, :]))
+            plt.figure() 
+            plt.errorbar(x_range, np.fabs(data[0, :]-data[2, :]), np.sqrt(np.fabs(data[1, :]-data[3, :])),
+                         linestyle='None', marker='*')
+
+        pdf = backend_pdf.PdfPages("plot_mean_var.pdf")
+        for fig in range(1, plt.figure().number): ## will open an empty extra figure :(
+            pdf.savefig( fig )
+        pdf.close()
+
     def test(self):
+        ' DOC '
         self.__evaluate_features()
