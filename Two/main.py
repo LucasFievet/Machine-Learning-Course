@@ -37,5 +37,8 @@ if __name__ == "__main__":
             f.plot_mean_var()
             f.plot_mean()
             f.plot_var()
+        if args[1] == "sf":
+            f = FindFeatures()
+            f.plot_significant()
 
     print("Program execution took %s seconds" %round(time.time() - start_time, 3))

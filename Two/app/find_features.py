@@ -7,18 +7,11 @@ import itertools
 import scipy.io
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends import backend_pdf
-
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
-from sklearn.cross_validation import cross_val_score, cross_val_predict
-from sklearn.metrics import log_loss, make_scorer
+from mpl_toolkits.mplot3d import Axes3D
 
 from .load_data import load_targets
-
 from .settings import CACHE_DIRECTORY, PLOT_DIRECTORY
 from .reduce_histogram import ReduceHistogram
 
@@ -26,12 +19,13 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class FindFeatures():
     " TODO doc "
-    def __init__(self, bins=10, size=20):
+    def __init__(self, bins=10, size=20, thresh=250):
         data = ReduceHistogram(bins, size).get_reduced_set('train')
         self.__data = np.transpose(data, (2, 1, 0))
         self.__targets = load_targets()['Y'].tolist()
         self.__evaluated = np.array([])
         self.__evaluate_features()
+        self.__thresh = thresh
 
     def __evaluate_features(self):
         file_path = os.path.join(CACHE_DIRECTORY, 'evaluate_features.mat')
@@ -57,6 +51,15 @@ class FindFeatures():
         healthy_var = np.var(healthy)
         return np.array([sick_mean, sick_var, healthy_mean, healthy_var])
 
+    def __exctract_significant(self):
+        shape = self.__evaluated[:, :, 0].shape
+        mean_dif = np.fabs(self.__evaluated[:, :, 0]-self.__evaluated[:, :, 2])
+        iteration = [range(shape[0]), range(shape[1])]
+        locations = [c for c in itertools.product(*iteration)
+                     if mean_dif[c[0], c[1]] > self.__thresh]
+        return np.array(locations)
+
+
     def plot_mean_var(self):
         """TODO: Docstring for plot_mean_var.
         """
@@ -65,11 +68,11 @@ class FindFeatures():
             data = self.__evaluated[i, :, :].transpose()
             x_range = range(len(data[0, :]))
             plt.figure(num=i+1)
-            plt.errorbar(x_range, np.fabs(data[0, :]-data[2, :]), 
+            plt.errorbar(x_range, np.fabs(data[0, :]-data[2, :]),
                          np.sqrt(np.fabs(data[1, :]-data[3, :])),
                          linestyle='None', marker='*', markersize=2.0,
                          linewidth=0.7, capsize=1)
-        path = os.path.join(PLOT_DIRECTORY, "plot_mean_var.pdf")
+        path = os.path.join(PLOT_DIRECTORY, 'plot_mean_var.pdf')
         pdf = backend_pdf.PdfPages(path)
         for fig in range(1, plt.figure().number):
             pdf.savefig(fig)
@@ -85,7 +88,7 @@ class FindFeatures():
             x_range = range(len(data[0, :]))
             plt.figure(num=i+1)
             plt.plot(x_range, np.fabs(data[0, :]-data[2, :]))
-                        
+
         path = os.path.join(PLOT_DIRECTORY, "plot_mean.pdf")
         pdf = backend_pdf.PdfPages(path)
         for fig in range(1, plt.figure().number):
@@ -101,12 +104,37 @@ class FindFeatures():
             data = self.__evaluated[i, :, :].transpose()
             x_range = range(len(data[0, :]))
             plt.figure(num=i+1)
-            plt.scatter(x_range, np.fabs(data[1, :]), s=3, c='r', marker='*', edgecolors='none')
-            plt.scatter(x_range, np.fabs(data[3, :]), s=3, c='b', marker='^', edgecolors='none')
-                        
+            plt.scatter(x_range, np.sqrt(np.fabs(data[1, :])),
+                        s=3, c='r', marker='*', edgecolors='none')
+            plt.scatter(x_range, np.sqrt(np.fabs(data[3, :])),
+                        s=3, c='b', marker='^', edgecolors='none')
+
         path = os.path.join(PLOT_DIRECTORY, "plot_var.pdf")
         pdf = backend_pdf.PdfPages(path)
         for fig in range(1, plt.figure().number):
             pdf.savefig(fig)
         plt.close('all')
         pdf.close()
+
+    def plot_significant(self):
+        """ plot_significant
+        """
+        locations = self.__exctract_significant()
+        mean_dif = np.fabs(self.__evaluated[:, :, 0]-self.__evaluated[:, :, 2])
+        z_range = range(np.shape(locations)[0])
+        z_val = np.array([mean_dif[locations[i, 0], locations[i, 1]] for i in z_range])
+
+        fig = plt.figure()
+        axi = fig.add_subplot(111, projection='3d')
+        axi.scatter(locations[:, 0], locations[:, 1], z_val)
+        axi.set_xlabel('bins')
+        axi.set_ylabel('box')
+        axi.set_zlabel('mean difference')
+        plt.show()
+        plt.close(fig)
+
+
+    def test(self):
+        """ TEST
+        """
+        self.plot_significant()
