@@ -52,11 +52,15 @@ class FindFeatures():
         return np.array([sick_mean, sick_var, healthy_mean, healthy_var])
 
     def __exctract_significant(self):
-        shape = self.__evaluated[:, :, 0].shape
-        mean_dif = np.fabs(self.__evaluated[:, :, 0]-self.__evaluated[:, :, 2])
+        evaluated = self.__evaluated
+        shape = evaluated[:, :, 0].shape
+        mean_dif = np.fabs(evaluated[:, :, 0]-evaluated[:, :, 2])
+        var_avg = np.sqrt(np.divide((evaluated[:, :, 1]+evaluated[:, :, 3]), 2))
         iteration = [range(shape[0]), range(shape[1])]
         locations = [c for c in itertools.product(*iteration)
-                     if mean_dif[c[0], c[1]] > self.__thresh]
+                     if mean_dif[c[0], c[1]] > self.__thresh
+                     if mean_dif[c[0], c[1]] > var_avg[c[0], c[1]]]
+        print('Number of significant areas found:', np.shape(locations)[0])
         return np.array(locations)
 
 
