@@ -40,5 +40,11 @@ if __name__ == "__main__":
         if args[1] == "sf":
             f = FindFeatures()
             f.plot_significant()
+        if args[1] == "test":
+            f = FindFeatures()
+            train = f.get_significant('train')
+            test = f.get_significant('test')
+            print(np.shape(train))
+            print(np.shape(test))
 
     print("Program execution took %s seconds" %round(time.time() - start_time, 3))

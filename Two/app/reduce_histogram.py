@@ -24,24 +24,36 @@ class ReduceHistogram:
         self.__box_positions()
         self.__len_train = len(self.__train_set)
         self.__len_test = len(self.__test_set)
-
         self.__train_path = os.path.join(CACHE_DIRECTORY, 'reduced_data', 'train')
         self.__test_path = os.path.join(CACHE_DIRECTORY, 'reduced_data', 'test')
-        if not os.path.exists(self.__train_path):
-            os.makedirs(self.__train_path)
-            self.__compute_new('train')
-        #if not os.path.exists(self.__test_path):
-        #    os.makedirs(self.__test_path)
-        #    self.__compute_new('test')
 
     def get_reduced_set(self, typ='train'):
-        r = range(self.__len_train) if typ is 'train' else range(self.__len_test)
-        return np.stack([self.get_reduced(i, typ) for i in r])
+        """ doc
+        """
+        self.__check_exists(typ)
+        rge = range(self.__len_train) if typ is 'train' else range(self.__len_test)
+        return np.stack([self.__get_reduced(i, typ) for i in rge])
 
     def get_reduced(self, index, typ='train'):
+        """ doc
+        """
+        self.__check_exists(typ)
+        return self.__get_reduced(index, typ)
+
+    def __get_reduced(self, index, typ='train'):
         dir_path = self.__train_path if typ is 'train' else self.__test_path
         file_path = os.path.join(dir_path, '{}_{}.hdf'.format(typ, index))
         return np.array(pd.read_hdf(file_path, 'table'))
+
+    def __check_exists(self, typ='train'):
+        if typ == 'train':
+            if not os.path.exists(self.__train_path):
+                os.makedirs(self.__train_path)
+                self.__compute_new('train')
+        else:
+            if not os.path.exists(self.__test_path):
+                os.makedirs(self.__test_path)
+                self.__compute_new('test')
 
     def __compute_new(self, typ='train'):
         data = self.__train_set if typ is 'train' else self.__test_set
@@ -56,7 +68,7 @@ class ReduceHistogram:
 
     def __reduce(self, data):
         out = []
-        for x , y, z in itertools.product(*self.__steps):
+        for x, y, z in itertools.product(*self.__steps):
             out.append(self.__histogram(data.get_data()[x[0]:x[1], y[0]:y[1], z[0]:z[1], 0]))
         return out
 
