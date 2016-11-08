@@ -2,8 +2,8 @@
 
 import sys
 import os
-import numpy as np
 import time
+import numpy as np
 
 from app.trial_one import submission_predictor
 from app.healthy_sick_comparison import healthy_sick_comparison
@@ -36,13 +36,14 @@ if __name__ == "__main__":
         if args[1] == "ff":
             f = FindFeatures(150, 20)
             f.plot_mean_var()
+            f.plot_mean_var_diff()
             f.plot_mean()
             #f.plot_var()
         if args[1] == "sf":
             f = FindFeatures(150, 20)
             f.plot_significant()
         if args[1] == "test":
-            f = FindFeatures(150, 20)
+            f = FindFeatures(150, 20, 10)
             train = f.get_significant('train')
             test = f.get_significant('test')
             print(np.shape(train))

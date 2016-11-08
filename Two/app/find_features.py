@@ -79,6 +79,25 @@ class FindFeatures():
         healthy_var = np.var(healthy)
         return np.array([sick_mean, sick_var, healthy_mean, healthy_var])
 
+    def plot_mean_var_diff(self):
+        """TODO: Docstring for plot_mean_var.
+        """
+        width = 0.3
+        length = len(self.__evaluated[:, 0, 0])
+        path = os.path.join(PLOT_DIRECTORY, 'plot_mean_var_diff.pdf')
+        pdf = backend_pdf.PdfPages(path)
+        for i in range(length):
+            data = self.__evaluated[i, :, :].transpose()
+            x_range = range(len(data[0, :]))
+            fig = plt.figure()
+            fig.suptitle('bin {}'.format(i), fontsize=12)
+            plt.bar(x_range,
+                    (np.fabs(data[0, :]-data[2, :])-np.sqrt(np.divide(data[1, :]+data[3, :], 2))),
+                    width, color='black', linewidth=0)
+            pdf.savefig(fig)
+            plt.close(fig)
+        pdf.close()
+
     def plot_mean_var(self):
         """TODO: Docstring for plot_mean_var.
         """
@@ -90,8 +109,9 @@ class FindFeatures():
             data = self.__evaluated[i, :, :].transpose()
             x_range = range(len(data[0, :]))
             fig = plt.figure()
+            fig.suptitle('bin {}'.format(i), fontsize=12)
             plt.bar(x_range, np.fabs(data[0, :]-data[2, :]), width, color='g', linewidth=0)
-            plt.bar(x_range, np.sqrt(np.divide(data[1,:]+data[3, :], 2)),
+            plt.bar(x_range, np.sqrt(np.divide(data[1, :]+data[3, :], 2)),
                     width, color='r', linewidth=0)
             pdf.savefig(fig)
             plt.close(fig)
@@ -107,6 +127,7 @@ class FindFeatures():
             data = self.__evaluated[i, :, :].transpose()
             x_range = range(len(data[0, :]))
             fig = plt.figure()
+            fig.suptitle('bin {}'.format(i), fontsize=12)
             plt.bar(x_range, np.fabs(data[0, :]-data[2, :]), 0.3, color='black', linewidth=0)
             pdf.savefig(fig)
             plt.close(fig)
