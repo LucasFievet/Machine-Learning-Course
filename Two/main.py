@@ -31,17 +31,18 @@ if __name__ == "__main__":
         if args[1] == "healthy_sick_comparison":
             healthy_sick_comparison()
         if args[1] == "reduce_histogram":
-            r = ReduceHistogram(10, 20)
+            r = ReduceHistogram(150, 20)
+            r.test()
         if args[1] == "ff":
-            f = FindFeatures(10, 20)
+            f = FindFeatures(150, 20)
             f.plot_mean_var()
             f.plot_mean()
             f.plot_var()
         if args[1] == "sf":
-            f = FindFeatures()
+            f = FindFeatures(150, 20)
             f.plot_significant()
         if args[1] == "test":
-            f = FindFeatures()
+            f = FindFeatures(150, 20)
             train = f.get_significant('train')
             test = f.get_significant('test')
             print(np.shape(train))

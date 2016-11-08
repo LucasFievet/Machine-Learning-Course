@@ -19,8 +19,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class FindFeatures():
     " TODO doc "
-    def __init__(self, bins=10, size=20, thresh=250):
-        data = ReduceHistogram(bins, size)
+    def __init__(self, bin_size=200, box_size=20, thresh=250):
+        data = ReduceHistogram(bin_size, box_size)
         self.__data = np.transpose(data.get_reduced_set('train'), (2, 1, 0))
         self.__train = data.get_reduced_set('train')
         self.__test = data.get_reduced_set('test')

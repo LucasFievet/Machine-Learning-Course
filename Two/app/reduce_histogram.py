@@ -16,14 +16,15 @@ class ReduceHistogram:
 
     """Docstring for reduce_histogram. """
 
-    def __init__(self, bins, size):
-        self.__bins = bins
-        self.__size = size
+    def __init__(self, bin_size, box_size):
+        self.__size = box_size
         self.__test_set = load_samples_inputs(False)
         self.__train_set = load_samples_inputs(True)
-        self.__box_positions()
         self.__len_train = len(self.__train_set)
         self.__len_test = len(self.__test_set)
+        self.__max = self.__find_max()
+        self.__bins = self.__compute_bins(bin_size) 
+        self.__box_positions()
         self.__train_path = os.path.join(CACHE_DIRECTORY, 'reduced_data', 'train')
         self.__test_path = os.path.join(CACHE_DIRECTORY, 'reduced_data', 'test')
 
@@ -73,10 +74,31 @@ class ReduceHistogram:
         return out
 
     def __histogram(self, data):
-        hist, edges = np.histogram(data, bins=self.__bins, range=[100, 1600], density=False)
+        hist, edges = np.histogram(data, bins=self.__bins, range=[100, self.__max], density=False)
         return hist
 
     def __box_positions(self):
         shape = np.shape(self.__train_set[0].get_data()[:, :, :, 0])
         s = self.__size
         self.__steps = list(map(lambda x: list(zip(range(0, x, s), range(s, x+s, s))), shape))
+
+    def __compute_bins(self, bin_size):
+        bins = self.__max/bin_size
+        return int(round(bins))
+
+    def __find_max(self):
+        file_path = os.path.join(CACHE_DIRECTORY, 'max_val.hdf')
+        if os.path.exists(file_path):
+            return pd.read_hdf(file_path, 'table')[0]
+        else:
+            max_train = [np.amax(i.get_data()[:, :, :, 0]) for i in self.__train_set]
+            max_test = [np.amax(i.get_data()[:, :, :, 0]) for i in self.__test_set]
+            max_train = np.amax(max_train)
+            max_test = np.amax(max_test)
+            maxima = np.amax([max_train, max_test])
+            pd.DataFrame([maxima]).to_hdf(file_path, 'table')
+            return maxima 
+
+    def test(self):
+        print(self.__find_max())
+
