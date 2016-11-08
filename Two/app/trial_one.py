@@ -56,6 +56,7 @@ def submission_predictor():
 
     # Make a cross validated prediction for each age group
     predictor_all = cross_val_predict_data(training_inputs, labels, health, bins)
+    cross_val_score_data(training_inputs, health, bins)
 
     print("Load the test inputs")
 
@@ -127,6 +128,45 @@ class PredictorWrapper2:
         # test_predicted = [0.75 if 0.5 < p < 0.9 else p for p in test_predicted]
         # test_predicted = [0.0 if p < 0.3 else p for p in test_predicted]
         return test_predicted
+
+
+def cross_val_score_data(inputs, labels, bins):
+    """
+    Make a cross validated prediction for the given inputs and ages
+    :param inputs: The brain scans
+    :param tag: Group tag
+    :return: Sklearn predictor
+    """
+
+    print("Extract features")
+
+    # Make a histogram of 7 even bins for each brain scan
+    inputs = extract_features_regions(inputs, bins)
+
+    # Create the pipeline for a linear regression
+    # on features of second order polynomials
+    predictor = Pipeline([
+        ('poly', PolynomialFeatures(degree=2)),
+        ('linear', PredictorWrapper(LogisticRegression()))
+    ])
+
+    print("Compute cross validated score")
+
+    # Cross validated prediction
+    scores = cross_val_score(
+        predictor,
+        inputs,
+        labels,
+        scoring=make_scorer(log_loss),
+        cv=4,
+        n_jobs=4
+    )
+    print("Log Loss: %0.3f (+/- %0.3f)" % (scores.mean(), scores.std() * 2))
+
+    # Fit the predictor with the training data for later use
+    predictor.fit(inputs, labels)
+
+    return predictor
 
 
 def cross_val_predict_data(inputs, labels, health, bins):
@@ -271,26 +311,30 @@ def extract_features_regions(data, bins):
     :return: List of 1D numpy arrays
     """
 
-    region_indices = []
-    region_path = os.path.join(
-        CACHE_DIRECTORY,
-        "region_cache.hdf"
-    )
-    for l in range(2, 3):
-        df = pd.read_hdf(region_path.replace(".hdf", "-%s.hdf" % l), "table")
-        region_indices.append(df[l].tolist())
-        print(len(df))
+    # region_indices = []
+    # region_path = os.path.join(
+    #     CACHE_DIRECTORY,
+    #     "region_cache.hdf"
+    # )
+    # for l in range(2, 3):
+    #     df = pd.read_hdf(region_path.replace(".hdf", "-%s.hdf" % l), "table")
+    #     region_indices.append(df[l].tolist())
+    #     print(len(df))
 
     inputs = []
     for i in data:
         flat_data_i = i.get_data().flatten()
+        features = binarize(
+            flat_data_i,
+            bins
+        )
 
-        features = np.array([])
-        for r in region_indices:
-            features = np.concatenate((features, binarize(
-                flat_data_i,
-                bins
-            )))
+        # features = np.array([])
+        # for r in region_indices:
+        #     features = np.concatenate((features, binarize(
+        #         flat_data_i,
+        #         bins
+        #     )))
 
         inputs.append(features)
 
