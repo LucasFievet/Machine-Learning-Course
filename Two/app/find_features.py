@@ -20,6 +20,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 class FindFeatures():
     " TODO doc "
     def __init__(self, bin_size=200, box_size=20, thresh=250):
+        self.__var_fac = 2
         data = ReduceHistogram(bin_size, box_size)
         self.__data = np.transpose(data.get_reduced_set('train'), (2, 1, 0))
         self.__train = data.get_reduced_set('train')
@@ -47,7 +48,7 @@ class FindFeatures():
         evaluated = self.__evaluated
         shape = evaluated[:, :, 0].shape
         mean_dif = np.fabs(evaluated[:, :, 0]-evaluated[:, :, 2])
-        var_avg = np.sqrt(np.divide((evaluated[:, :, 1]+evaluated[:, :, 3]), 2))
+        var_avg = np.sqrt(np.divide((evaluated[:, :, 1]+evaluated[:, :, 3]), self.__var_fac))
         iteration = [range(shape[0]), range(shape[1])]
         locations = [c for c in itertools.product(*iteration)
                      if mean_dif[c] > self.__thresh
@@ -91,9 +92,9 @@ class FindFeatures():
             x_range = range(len(data[0, :]))
             fig = plt.figure()
             fig.suptitle('bin {}'.format(i), fontsize=12)
-            plt.bar(x_range,
-                    (np.fabs(data[0, :]-data[2, :])-np.sqrt(np.divide(data[1, :]+data[3, :], 2))),
-                    width, color='black', linewidth=0)
+            y_range = (np.fabs(data[0, :]-data[2, :])-np.sqrt(
+                np.divide(data[1, :]+data[3, :], self.__var_fac)))
+            plt.bar(x_range, y_range, width, color='black', linewidth=0)
             pdf.savefig(fig)
             plt.close(fig)
         pdf.close()
@@ -111,7 +112,7 @@ class FindFeatures():
             fig = plt.figure()
             fig.suptitle('bin {}'.format(i), fontsize=12)
             plt.bar(x_range, np.fabs(data[0, :]-data[2, :]), width, color='g', linewidth=0)
-            plt.bar(x_range, np.sqrt(np.divide(data[1, :]+data[3, :], 2)),
+            plt.bar(x_range, np.sqrt(np.divide(data[1, :]+data[3, :], self.__var_fac)),
                     width, color='r', linewidth=0)
             pdf.savefig(fig)
             plt.close(fig)
