@@ -82,57 +82,52 @@ class FindFeatures():
     def plot_mean_var(self):
         """TODO: Docstring for plot_mean_var.
         """
+        width = 0.3
         length = len(self.__evaluated[:, 0, 0])
+        path = os.path.join(PLOT_DIRECTORY, 'plot_mean_var.pdf')
+        pdf = backend_pdf.PdfPages(path)
         for i in range(length):
             data = self.__evaluated[i, :, :].transpose()
             x_range = range(len(data[0, :]))
-            plt.figure(num=i+1)
-            plt.errorbar(x_range, np.fabs(data[0, :]-data[2, :]),
-                         np.sqrt(np.fabs(data[1, :]-data[3, :])),
-                         linestyle='None', marker='*', markersize=2.0,
-                         linewidth=0.7, capsize=1)
-        path = os.path.join(PLOT_DIRECTORY, 'plot_mean_var.pdf')
-        pdf = backend_pdf.PdfPages(path)
-        for fig in range(1, plt.figure().number):
+            fig = plt.figure()
+            plt.bar(x_range, np.fabs(data[0, :]-data[2, :]), width, color='g', linewidth=0)
+            plt.bar(x_range, np.sqrt(np.divide(data[1,:]+data[3, :], 2)),
+                    width, color='r', linewidth=0)
             pdf.savefig(fig)
-        plt.close('all')
+            plt.close(fig)
         pdf.close()
 
     def plot_mean(self):
         """TODO: Docstring for plot_mean.
         """
         length = len(self.__evaluated[:, 0, 0])
+        path = os.path.join(PLOT_DIRECTORY, "plot_mean.pdf")
+        pdf = backend_pdf.PdfPages(path)
         for i in range(length):
             data = self.__evaluated[i, :, :].transpose()
             x_range = range(len(data[0, :]))
-            plt.figure(num=i+1)
-            plt.plot(x_range, np.fabs(data[0, :]-data[2, :]))
-
-        path = os.path.join(PLOT_DIRECTORY, "plot_mean.pdf")
-        pdf = backend_pdf.PdfPages(path)
-        for fig in range(1, plt.figure().number):
+            fig = plt.figure()
+            plt.bar(x_range, np.fabs(data[0, :]-data[2, :]), 0.3, color='black', linewidth=0)
             pdf.savefig(fig)
-        plt.close('all')
+            plt.close(fig)
         pdf.close()
 
     def plot_var(self):
         """TODO: Docstring for plot_var.
         """
         length = len(self.__evaluated[:, 0, 0])
+        path = os.path.join(PLOT_DIRECTORY, "plot_var.pdf")
+        pdf = backend_pdf.PdfPages(path)
         for i in range(length):
             data = self.__evaluated[i, :, :].transpose()
             x_range = range(len(data[0, :]))
-            plt.figure(num=i+1)
+            fig = plt.figure()
             plt.scatter(x_range, np.sqrt(np.fabs(data[1, :])),
                         s=3, c='r', marker='*', edgecolors='none')
             plt.scatter(x_range, np.sqrt(np.fabs(data[3, :])),
                         s=3, c='b', marker='^', edgecolors='none')
-
-        path = os.path.join(PLOT_DIRECTORY, "plot_var.pdf")
-        pdf = backend_pdf.PdfPages(path)
-        for fig in range(1, plt.figure().number):
             pdf.savefig(fig)
-        plt.close('all')
+            plt.close(fig)
         pdf.close()
 
     def plot_significant(self):

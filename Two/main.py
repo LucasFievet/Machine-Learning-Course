@@ -37,7 +37,7 @@ if __name__ == "__main__":
             f = FindFeatures(150, 20)
             f.plot_mean_var()
             f.plot_mean()
-            f.plot_var()
+            #f.plot_var()
         if args[1] == "sf":
             f = FindFeatures(150, 20)
             f.plot_significant()
