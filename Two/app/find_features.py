@@ -50,8 +50,8 @@ class FindFeatures():
         var_avg = np.sqrt(np.divide((evaluated[:, :, 1]+evaluated[:, :, 3]), 2))
         iteration = [range(shape[0]), range(shape[1])]
         locations = [c for c in itertools.product(*iteration)
-                     if mean_dif[c[0], c[1]] > self.__thresh
-                     if mean_dif[c[0], c[1]] > var_avg[c[0], c[1]]]
+                     if mean_dif[c] > self.__thresh
+                     if mean_dif[c] > var_avg[c]]
         print('Number of significant areas found:', np.shape(locations)[0])
         return np.array(locations)
 
