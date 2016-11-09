@@ -9,6 +9,7 @@ from app.trial_one import submission_predictor
 from app.healthy_sick_comparison import healthy_sick_comparison
 from app.reduce_histogram import ReduceHistogram 
 from app.find_features import FindFeatures
+from app.predictor import predict
 
 from app.settings import CACHE_DIRECTORY, PLOT_DIRECTORY
 
@@ -48,5 +49,7 @@ if __name__ == "__main__":
             test = f.get_significant('test')
             print(np.shape(train))
             print(np.shape(test))
+        if args[1] == "predict":
+            predict(150, 10, 0, 2)
 
     print("Program execution took %s seconds" %round(time.time() - start_time, 3))
