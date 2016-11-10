@@ -25,8 +25,10 @@ class ReduceHistogram:
         self.__max = self.__find_max()
         self.__bins = self.__compute_bins(bin_size)
         self.__box_positions()
-        self.__train_path = os.path.join(CACHE_DIRECTORY, 'reduced_data', 'train')
-        self.__test_path = os.path.join(CACHE_DIRECTORY, 'reduced_data', 'test')
+        self.__train_path = os.path.join(CACHE_DIRECTORY, 'reduced_data',
+                                         'train_{}_{}'.format(bin_size, box_size))
+        self.__test_path = os.path.join(CACHE_DIRECTORY, 'reduced_data',
+                                        'test_{}_{}'.format(bin_size, box_size))
 
     def get_reduced_set(self, typ='train'):
         """ doc
@@ -89,6 +91,7 @@ class ReduceHistogram:
         return bins
 
     def __find_max(self):
+        """
         file_path = os.path.join(CACHE_DIRECTORY, 'max_val.hdf')
         if os.path.exists(file_path):
             return pd.read_hdf(file_path, 'table')[0]
@@ -101,6 +104,8 @@ class ReduceHistogram:
             pd.DataFrame([maxima]).to_hdf(file_path, 'table')
             print('Maxmal Value of:', maxima)
             return maxima
+        """
+        return 4418
 
     def test(self):
         print(self.__find_max())

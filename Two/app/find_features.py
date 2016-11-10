@@ -22,9 +22,10 @@ class FindFeatures():
     def __init__(self, bin_size=200, box_size=20, thresh=20, fac=2):
         data = ReduceHistogram(bin_size, box_size)
         self.__vars = {'fac': fac, 'thresh': thresh}
+        self.__vars['RH'] = data
+        self.__vars['options'] = '{}_{}_{}_{}'.format(bin_size, box_size, thresh, fac)
         self.__vars['data'] = np.transpose(data.get_reduced_set('train'), (2, 1, 0))
         self.__vars['train'] = data.get_reduced_set('train')
-        self.__vars['test'] = data.get_reduced_set('test')
         self.__vars['targets'] = load_targets()['Y'].tolist()
         self.__vars['evaluated'] = self.__evaluate_features()
         self.__vars['locations'] = self.__exctract_significant()
@@ -32,6 +33,9 @@ class FindFeatures():
     def get_significant(self, typ='train'):
         """ doc
         """
+        if typ is 'test':
+            self.__vars['test'] = self.__vars['RH'].get_reduced_set('test')
+
         return np.array(self.__exctract_values(typ))
 
     def get_targets(self):
@@ -51,7 +55,8 @@ class FindFeatures():
         evaluated = self.__vars['evaluated']
         shape = evaluated[:, :, 0].shape
         mean_dif = np.fabs(evaluated[:, :, 0]-evaluated[:, :, 2])
-        var_avg = np.sqrt(np.divide((evaluated[:, :, 1]+evaluated[:, :, 3]), self.__vars['fac']))
+        #var_avg = np.sqrt(np.divide((evaluated[:, :, 1]+evaluated[:, :, 3]), self.__vars['fac']))
+        var_avg = np.sqrt(evaluated[:, :, 1])+np.sqrt(evaluated[:, :, 3])
         iteration = [range(shape[0]), range(shape[1])]
         locations = [c for c in itertools.product(*iteration)
                      if mean_dif[c] > self.__vars['thresh']
@@ -60,7 +65,8 @@ class FindFeatures():
         return np.array(locations)
 
     def __evaluate_features(self):
-        file_path = os.path.join(CACHE_DIRECTORY, 'evaluate_features.mat')
+        file_path = os.path.join(CACHE_DIRECTORY,
+                                 'evaluate_features_{}.mat'.format(self.__vars['options']))
         if os.path.exists(file_path):
             out = scipy.io.loadmat(file_path)['data']
         else:

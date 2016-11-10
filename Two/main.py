@@ -50,6 +50,6 @@ if __name__ == "__main__":
             print(np.shape(train))
             print(np.shape(test))
         if args[1] == "predict":
-            predict(150, 10, 0, 2)
+            predict(150, 5, 0, 1)
 
     print("Program execution took %s seconds" %round(time.time() - start_time, 3))
