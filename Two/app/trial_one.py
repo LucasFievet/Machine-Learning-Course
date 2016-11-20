@@ -106,7 +106,7 @@ class PredictorWrapper:
     def predict(self, *args, **kwargs):
         test_predicted = self.predictor.predict_proba(*args, **kwargs)
         test_predicted = [p[1] for p in test_predicted]
-        test_predicted = [1.0 if p > 0.95 else p for p in test_predicted]
+        #test_predicted = [1.0 if p > 0.95 else p for p in test_predicted]
         return test_predicted
 
 

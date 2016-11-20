@@ -14,20 +14,34 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.cross_validation import cross_val_score, cross_val_predict
 from sklearn.metrics import log_loss, make_scorer
 from sklearn import preprocessing
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2, mutual_info_classif
+
 
 from .settings import CURRENT_DIRECTORY, CACHE_DIRECTORY
 from .find_features import FindFeatures
 from .trial_one import PredictorWrapper
 
+from .load_data import load_targets
+from .reduce_histogram import ReduceHistogram
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def predict(bin_size=200, box_size=20, thresh=20, fac=2):
-    features = FindFeatures(bin_size, box_size, thresh, fac)
-    train_data = features.get_significant('train')
-    targets = features.get_targets()
-    scaler = preprocessing.Normalizer().fit(train_data)
-    train_data = scaler.transform(train_data)
-    predictor = cross_val_score_data(train_data, targets)
+    #features = FindFeatures(bin_size, box_size, thresh, fac)
+    #train_data = features.get_auto_features(100)
+    #targets = features.get_targets()
+    targets = load_targets()['Y'].tolist()
+    reduced = ReduceHistogram(150, 10)
+    data = reduced.get_reduced_set('train')
+    data = [data[i, :, :].flatten() for i in range(np.shape(data)[0])]
+
+    data = SelectKBest(mutual_info_classif, k=1000).fit_transform(data, targets)
+    scaler = preprocessing.Normalizer().fit(data)
+    data = scaler.transform(data)
+
+    predictor = cross_val_score_data(data, targets)
+
 
 def cross_val_score_data(inputs, labels):
     """
@@ -51,7 +65,7 @@ def cross_val_score_data(inputs, labels):
         labels,
         scoring=make_scorer(log_loss),
         cv=4,
-        n_jobs=4
+        n_jobs=8
     )
     print("Log Loss: %0.3f (+/- %0.3f)" % (scores.mean(), scores.std() * 2))
 

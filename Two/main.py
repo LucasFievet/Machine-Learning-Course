@@ -35,13 +35,13 @@ if __name__ == "__main__":
             r = ReduceHistogram(150, 20)
             r.test()
         if args[1] == "ff":
-            f = FindFeatures(150, 20)
-            f.plot_mean_var()
+            f = FindFeatures(150, 20, 0, 2)
+            #f.plot_mean_var()
             f.plot_mean_var_diff()
-            f.plot_mean()
+            #f.plot_mean()
             #f.plot_var()
         if args[1] == "sf":
-            f = FindFeatures(150, 20)
+            f = FindFeatures(150, 20, 0, 2)
             f.plot_significant()
         if args[1] == "test":
             f = FindFeatures(150, 20, 10)
@@ -50,6 +50,6 @@ if __name__ == "__main__":
             print(np.shape(train))
             print(np.shape(test))
         if args[1] == "predict":
-            predict(150, 5, 0, 1)
+            predict(150, 20, 0, 2)
 
     print("Program execution took %s seconds" %round(time.time() - start_time, 3))
