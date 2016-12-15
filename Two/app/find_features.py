@@ -1,4 +1,4 @@
-"""Description of this file."""
+"""FindFeatures Class"""
 
 import os
 import warnings
@@ -18,60 +18,70 @@ from .reduce_histogram import ReduceHistogram
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class FindFeatures():
-    " TODO doc "
-    def __init__(self, bin_size=200, box_size=20, thresh=250):
-        self.__var_fac = 2
+    "Extract relevant features from the reduced data."
+    def __init__(self, bin_size=200, box_size=20, thresh=0, fac=2):
         data = ReduceHistogram(bin_size, box_size)
-        self.__data = np.transpose(data.get_reduced_set('train'), (2, 1, 0))
-        self.__train = data.get_reduced_set('train')
-        self.__test = data.get_reduced_set('test')
-        self.__targets = load_targets()['Y'].tolist()
-        self.__evaluated = np.array([])
-        self.__evaluate_features()
-        self.__thresh = thresh
-        self.__locations = self.__exctract_significant()
+        self.__vars = {'fac': fac, 'thresh': thresh}
+        self.__vars['RH'] = data
+        self.__vars['options'] = '{}_{}_{}_{}'.format(
+            bin_size, box_size, thresh, fac)
+        self.__vars['data'] = np.transpose(data.get_reduced_set('train'),
+                                           (2, 1, 0))
+        self.__vars['train'] = data.get_reduced_set('train')
+        self.__vars['targets'] = load_targets()['Y'].tolist()
+        self.__vars['evaluated'] = self.__evaluate_features()
+        self.__vars['locations'] = self.__exctract_significant()
 
     def get_significant(self, typ='train'):
-        """ doc
-        """
+        """Returns the significant features of the reduced data."""
+        if typ is 'test':
+            self.__vars['test'] = self.__vars['RH'].get_reduced_set('test')
         return np.array(self.__exctract_values(typ))
 
+    def get_targets(self):
+        """Returns the target data."""
+        return self.__vars['targets']
+
     def __exctract_values(self, typ='train'):
-        data = self.__train if typ is 'train' else self.__test
-        loc = self.__locations
+        data = self.__vars[typ]
+        loc = self.__vars['locations']
         range_d = range(np.shape(data)[0])
         range_l = range(np.shape(loc)[0])
         return [[data[d, loc[l, 1], loc[l, 0]] for l in range_l] for d in range_d]
 
-
     def __exctract_significant(self):
-        evaluated = self.__evaluated
+        evaluated = self.__vars['evaluated']
         shape = evaluated[:, :, 0].shape
         mean_dif = np.fabs(evaluated[:, :, 0]-evaluated[:, :, 2])
-        var_avg = np.sqrt(np.divide((evaluated[:, :, 1]+evaluated[:, :, 3]), self.__var_fac))
+        var_avg = np.divide(
+            np.sqrt(evaluated[:, :, 1])+np.sqrt(evaluated[:, :, 3]),
+            self.__vars['fac'])
         iteration = [range(shape[0]), range(shape[1])]
         locations = [c for c in itertools.product(*iteration)
-                     if mean_dif[c] > self.__thresh
+                     if mean_dif[c] > self.__vars['thresh']
                      if mean_dif[c] > var_avg[c]]
         print('Number of significant areas found:', np.shape(locations)[0])
         return np.array(locations)
 
     def __evaluate_features(self):
-        file_path = os.path.join(CACHE_DIRECTORY, 'evaluate_features.mat')
+        file_path = os.path.join(CACHE_DIRECTORY,
+                                 'evaluate_features_{}.mat'.format(
+                                     self.__vars['options']))
         if os.path.exists(file_path):
-            self.__evaluated = scipy.io.loadmat(file_path)['data']
+            out = scipy.io.loadmat(file_path)['data']
         else:
-            shape = self.__data[:, :, 0].shape
+            shape = self.__vars['data'][:, :, 0].shape
             intervals = (range(shape[0]), range(shape[1]))
-            evaluated = [self.__eval_fun(self.__data[x, y, :])
+            evaluated = [self.__eval_fun(self.__vars['data'][x, y, :])
                          for x, y in itertools.product(*intervals)]
-            length = len(self.__eval_fun(self.__data[0, 0, :]))
-            self.__evaluated = np.array(evaluated).reshape(shape[0], shape[1], length)
-            scipy.io.savemat(file_path, mdict={'data': self.__evaluated}, oned_as='row')
-        print('shape of evaluated data:', np.shape(self.__evaluated))
+            length = len(self.__eval_fun(self.__vars['data'][0, 0, :]))
+            out = np.array(evaluated).reshape(shape[0], shape[1], length)
+            scipy.io.savemat(file_path, mdict={'data': out}, oned_as='row')
+        print('shape of evaluated data:', np.shape(out))
+        return out
 
     def __eval_fun(self, data):
-        tmp = list(zip(self.__targets, data))
+        tmp = list(zip(self.__vars['targets'], data))
         sick = [x[1] for x in tmp if x[0] == 1]
         healthy = [x[1] for x in tmp if x[0] == 0]
         sick_mean = np.mean(sick)
@@ -81,84 +91,95 @@ class FindFeatures():
         return np.array([sick_mean, sick_var, healthy_mean, healthy_var])
 
     def plot_mean_var_diff(self):
-        """TODO: Docstring for plot_mean_var.
-        """
+        """Plots the difference between the means difference
+           and the scaled combined variance"""
+        print('plot_mean_var_diff')
         width = 0.3
-        length = len(self.__evaluated[:, 0, 0])
+        length = len(self.__vars['evaluated'][:, 0, 0])
         path = os.path.join(PLOT_DIRECTORY, 'plot_mean_var_diff.pdf')
         pdf = backend_pdf.PdfPages(path)
         for i in range(length):
-            data = self.__evaluated[i, :, :].transpose()
+            data = self.__vars['evaluated'][i, :, :].transpose()
             x_range = range(len(data[0, :]))
             fig = plt.figure()
             fig.suptitle('bin {}'.format(i), fontsize=12)
-            y_range = (np.fabs(data[0, :]-data[2, :])-np.sqrt(
-                np.divide(data[1, :]+data[3, :], self.__var_fac)))
+            var_avg = np.divide(np.sqrt(data[1, :])+np.sqrt(data[3, :]),
+                                self.__vars['fac'])
+            y_range = np.fabs(data[0, :]-data[2, :])-var_avg
             plt.bar(x_range, y_range, width, color='black', linewidth=0)
             pdf.savefig(fig)
             plt.close(fig)
         pdf.close()
 
     def plot_mean_var(self):
-        """TODO: Docstring for plot_mean_var.
-        """
+        """Plots the means difference and the scaled combined variance"""
+        print('plot_mean_var')
         width = 0.3
-        length = len(self.__evaluated[:, 0, 0])
+        length = len(self.__vars['evaluated'][:, 0, 0])
         path = os.path.join(PLOT_DIRECTORY, 'plot_mean_var.pdf')
         pdf = backend_pdf.PdfPages(path)
         for i in range(length):
-            data = self.__evaluated[i, :, :].transpose()
+            data = self.__vars['evaluated'][i, :, :].transpose()
             x_range = range(len(data[0, :]))
             fig = plt.figure()
             fig.suptitle('bin {}'.format(i), fontsize=12)
-            plt.bar(x_range, np.fabs(data[0, :]-data[2, :]), width, color='g', linewidth=0)
-            plt.bar(x_range, np.sqrt(np.divide(data[1, :]+data[3, :], self.__var_fac)),
+            plt.bar(x_range, np.fabs(data[0, :]-data[2, :]),
+                    width, color='g', linewidth=0)
+            plt.bar(x_range, np.sqrt(np.divide(data[1, :]+data[3, :],
+                                               self.__vars['fac'])),
                     width, color='r', linewidth=0)
             pdf.savefig(fig)
             plt.close(fig)
         pdf.close()
 
     def plot_mean(self):
-        """TODO: Docstring for plot_mean.
-        """
-        length = len(self.__evaluated[:, 0, 0])
+        """Plots the difference of the healthy and
+           sick means for the individual bins."""
+        print('plot_mean')
+        length = len(self.__vars['evaluated'][:, 0, 0])
         path = os.path.join(PLOT_DIRECTORY, "plot_mean.pdf")
         pdf = backend_pdf.PdfPages(path)
         for i in range(length):
-            data = self.__evaluated[i, :, :].transpose()
+            data = self.__vars['evaluated'][i, :, :].transpose()
             x_range = range(len(data[0, :]))
             fig = plt.figure()
             fig.suptitle('bin {}'.format(i), fontsize=12)
-            plt.bar(x_range, np.fabs(data[0, :]-data[2, :]), 0.3, color='black', linewidth=0)
+            plt.bar(x_range, np.fabs(data[0, :]-data[2, :]),
+                    0.3, color='black', linewidth=0)
             pdf.savefig(fig)
             plt.close(fig)
         pdf.close()
 
     def plot_var(self):
-        """TODO: Docstring for plot_var.
-        """
-        length = len(self.__evaluated[:, 0, 0])
+        """Plots the individual bins variances of
+           both the sick and healthy brains."""
+        print('plot_var')
+        print(np.amax(self.__vars['evaluated'][:, :, 1]))
+        length = len(self.__vars['evaluated'][:, 0, 0])
         path = os.path.join(PLOT_DIRECTORY, "plot_var.pdf")
         pdf = backend_pdf.PdfPages(path)
         for i in range(length):
-            data = self.__evaluated[i, :, :].transpose()
+            data = self.__vars['evaluated'][i, :, :].transpose()
             x_range = range(len(data[0, :]))
             fig = plt.figure()
-            plt.scatter(x_range, np.sqrt(np.fabs(data[1, :])),
+            plt.scatter(x_range, np.fabs(data[1, :]),
                         s=3, c='r', marker='*', edgecolors='none')
-            plt.scatter(x_range, np.sqrt(np.fabs(data[3, :])),
+            plt.scatter(x_range, np.fabs(data[3, :]),
                         s=3, c='b', marker='^', edgecolors='none')
             pdf.savefig(fig)
             plt.close(fig)
         pdf.close()
 
     def plot_significant(self):
-        """ plot_significant
-        """
-        locations = self.__locations
-        mean_dif = np.fabs(self.__evaluated[:, :, 0]-self.__evaluated[:, :, 2])
+        """Plots the significant bin, location,
+           mean difference combinations."""
+        locations = self.__vars['locations']
+        mean_dif = np.fabs(
+            self.__vars['evaluated'][:, :, 0]
+            -self.__vars['evaluated'][:, :, 2])
         z_range = range(np.shape(locations)[0])
-        z_val = np.array([mean_dif[locations[i, 0], locations[i, 1]] for i in z_range])
+        z_val = np.array([mean_dif[locations[i, 0], locations[i, 1]]
+                          for i in z_range])
 
         fig = plt.figure()
         axi = fig.add_subplot(111, projection='3d')
@@ -168,9 +189,3 @@ class FindFeatures():
         axi.set_zlabel('mean difference')
         plt.show()
         plt.close(fig)
-
-
-    def test(self):
-        """ TEST
-        """
-        self.plot_significant()

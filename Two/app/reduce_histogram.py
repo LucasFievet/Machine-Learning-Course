@@ -1,4 +1,4 @@
-"""Description of this file."""
+"""ReduceHistogram Class."""
 
 import os
 import warnings
@@ -13,8 +13,8 @@ from .settings import CACHE_DIRECTORY
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class ReduceHistogram:
-
-    """Docstring for reduce_histogram. """
+    """Reduces the given 3D data, by splitting it into boxes
+       and evaluating the individual histograms."""
 
     def __init__(self, bin_size, box_size):
         self.__size = box_size
@@ -23,21 +23,23 @@ class ReduceHistogram:
         self.__len_train = len(self.__train_set)
         self.__len_test = len(self.__test_set)
         self.__max = self.__find_max()
-        self.__bins = self.__compute_bins(bin_size) 
+        self.__bins = self.__compute_bins(bin_size)
         self.__box_positions()
-        self.__train_path = os.path.join(CACHE_DIRECTORY, 'reduced_data', 'train')
-        self.__test_path = os.path.join(CACHE_DIRECTORY, 'reduced_data', 'test')
+        self.__train_path = os.path.join(CACHE_DIRECTORY, 'reduced_data',
+                                         'train_{}_{}'.format(
+                                             bin_size, box_size))
+        self.__test_path = os.path.join(CACHE_DIRECTORY, 'reduced_data',
+                                        'test_{}_{}'.format(
+                                            bin_size, box_size))
 
     def get_reduced_set(self, typ='train'):
-        """ doc
-        """
+        """Returns the reduced data set."""
         self.__check_exists(typ)
         rge = range(self.__len_train) if typ is 'train' else range(self.__len_test)
         return np.stack([self.__get_reduced(i, typ) for i in rge])
 
     def get_reduced(self, index, typ='train'):
-        """ doc
-        """
+        """Returns a specific reduced scan."""
         self.__check_exists(typ)
         return self.__get_reduced(index, typ)
 
@@ -70,35 +72,41 @@ class ReduceHistogram:
     def __reduce(self, data):
         out = []
         for x, y, z in itertools.product(*self.__steps):
-            out.append(self.__histogram(data.get_data()[x[0]:x[1], y[0]:y[1], z[0]:z[1], 0]))
+            out.append(self.__histogram(
+                data.get_data()[x[0]:x[1], y[0]:y[1], z[0]:z[1], 0]))
         return out
 
     def __histogram(self, data):
-        hist, edges = np.histogram(data, bins=self.__bins, range=[100, self.__max], density=False)
+        hist, edges = np.histogram(data, bins=self.__bins,
+                                   range=[100, self.__max], normed=True)
+        edges = (edges[:-1] + edges[1:])/2.0
+        hist *= edges
         return hist
 
     def __box_positions(self):
         shape = np.shape(self.__train_set[0].get_data()[:, :, :, 0])
         s = self.__size
-        self.__steps = list(map(lambda x: list(zip(range(0, x, s), range(s, x+s, s))), shape))
+        self.__steps = list(map(lambda x: list(zip(
+            range(0, x, s), range(s, x+s, s))), shape))
 
     def __compute_bins(self, bin_size):
         bins = self.__max/bin_size
-        return int(round(bins))
+        bins = int(round(bins))
+        print('number of bins:', bins)
+        return bins
 
     def __find_max(self):
         file_path = os.path.join(CACHE_DIRECTORY, 'max_val.hdf')
         if os.path.exists(file_path):
             return pd.read_hdf(file_path, 'table')[0]
         else:
-            max_train = [np.amax(i.get_data()[:, :, :, 0]) for i in self.__train_set]
-            max_test = [np.amax(i.get_data()[:, :, :, 0]) for i in self.__test_set]
+            max_train = [np.amax(i.get_data()[:, :, :, 0])
+                         for i in self.__train_set]
+            max_test = [np.amax(i.get_data()[:, :, :, 0])
+                        for i in self.__test_set]
             max_train = np.amax(max_train)
             max_test = np.amax(max_test)
             maxima = np.amax([max_train, max_test])
             pd.DataFrame([maxima]).to_hdf(file_path, 'table')
-            return maxima 
-
-    def test(self):
-        print(self.__find_max())
-
+            print('Maxmal Value of:', maxima)
+            return maxima
