@@ -34,4 +34,4 @@ def load_sample_input(index=1, training=True):
 
 def load_targets():
     targets_path = os.path.join(DATA_DIRECTORY, "targets.csv")
-    return pd.read_csv(targets_path, header=None, names=["Y"])
+    return pd.read_csv(targets_path, header=None, names=["G", "A", "H"])
