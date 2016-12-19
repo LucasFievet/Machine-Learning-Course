@@ -6,7 +6,6 @@ import time
 import numpy as np
 
 from app.trial_one import submission_predictor
-from app.healthy_sick_comparison import healthy_sick_comparison
 from app.reduce_histogram import ReduceHistogram 
 from app.find_features import FindFeatures
 
@@ -28,8 +27,6 @@ if __name__ == "__main__":
     else:
         if args[1] == "trial_one":
             submission_predictor()
-        if args[1] == "healthy_sick_comparison":
-            healthy_sick_comparison()
         if args[1] == "reduce_histogram":
             r = ReduceHistogram(150, 20)
             r.test()

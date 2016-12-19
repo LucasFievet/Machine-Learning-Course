@@ -5,6 +5,8 @@ import warnings
 
 import itertools
 
+import collections
+
 import numpy as np
 import pandas as pd
 
@@ -12,7 +14,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.cross_validation import cross_val_score, cross_val_predict
-from sklearn.metrics import log_loss, make_scorer, accuracy_score
+from sklearn.metrics import log_loss, make_scorer, hamming_loss
 
 from .load_data import load_samples_inputs, load_targets
 
@@ -43,46 +45,86 @@ def submission_predictor():
     # Load the training inputs and targets
     training_inputs = load_samples_inputs()
     data = load_targets()
-    bins = 12
+    bins_h = 12
+    bins_a = 12
+    bins_g = 8
 
+    # Group statistics
     data["Y"] = 4 * data["H"] + 2 * data["A"] + data["G"]
+    person = data["Y"].tolist()
+    print(collections.Counter(person))
 
     # Extract the target ages from the data
-    person = data["Y"].tolist()
-
-    print(data)
-
-    print("Create better labels")
-
-    # labels = cross_val_label(training_inputs, person, bins)
+    gender = data["G"].tolist()
+    age = data["A"].tolist()
+    health = data["H"].tolist()
 
     print("Make a cross validated prediction")
 
+    # young = data[data["A"] == 1]
+    # old = data[data["A"] == 0]
+    # young_gender = young["G"].tolist()
+    # old_gender = old["G"].tolist()
+
+    # training_inputs_young = [training_inputs[i] for i in young.index.tolist()]
+    # training_inputs_old = [training_inputs[i] for i in old.index.tolist()]
+
     # Make a cross validated prediction for each age group
-    # predictor_all = cross_val_predict_data(training_inputs, labels, health, bins)
-    predictor = cross_val_score_data(training_inputs, person, bins)
+    # predictor_gender_young = cross_val_score_data(training_inputs_young, young_gender, bins_g)
+    # predictor_gender_old = cross_val_score_data(training_inputs_old, old_gender, bins_g)
+
+    predictor_gender = cross_val_score_data(training_inputs, gender, bins_g)
+    predictor_age = cross_val_score_data(training_inputs, age, bins_a)
+    predictor_health = cross_val_score_data(training_inputs, health, bins_h)
 
     print("Load the test inputs")
 
     # Load the test inputs
     test_inputs = load_samples_inputs(False)
-    test_inputs = extract_features_regions(test_inputs, bins)
-    # # test_inputs = [binarize(i, bins) for i in test_inputs]
+    test_inputs_g = extract_features_regions(test_inputs, bins_g)
+    test_inputs_a = extract_features_regions(test_inputs, bins_a)
+    test_inputs_h = extract_features_regions(test_inputs, bins_h)
 
     print("Make an overall prediction for the test inputs")
 
     # Make an overall prediction for each test input
-    test_predicted = predictor.predict(test_inputs)
-    print(test_predicted)
+    test_predicted_age = np.array(predictor_age.predict(test_inputs_a))
+    # print(test_predicted_age)
+    # young_indices = np.where(test_predicted_age > 0.5)[0]
+    # old_indices = np.where(test_predicted_age <= 0)[0]
+    # print(young_indices)
+    # print(old_indices)
+    # print(test_inputs)
+    #
+    # test_inputs_young = np.array([test_inputs[i] for i in young_indices])
+    # test_inputs_old = np.array([test_inputs[i] for i in old_indices])
+
+    # test_predicted_gender_young = predictor_gender_young.predict(test_inputs_g)
+    # test_predicted_gender_old = predictor_gender_old.predict(test_inputs_g)
+    #
+    # test_predicted_gender = [0 for _ in range(0, len(test_predicted_age))]
+    # for i in young_indices:
+    #     test_predicted_gender[i] = test_predicted_gender_young[i]
+    # for i in old_indices:
+    #     test_predicted_gender[i] = test_predicted_gender_old[i]
+
+    test_predicted_gender = predictor_gender.predict(test_inputs_g)
+    test_predicted_health = predictor_health.predict(test_inputs_h)
 
     print("Write prediction to predictions.csv")
 
-    l = len(test_predicted)
+    l = len(test_predicted_health)
     df = pd.DataFrame()
     df["ID"] = range(0, 3*l)
     df["Sample"] = list(itertools.chain(*[[i, i, i] for i in range(0, l)]))
     df["Label"] = list(itertools.chain(*[["gender", "age", "health"] for _ in range(0, l)]))
-    df["Predicted"] = list(itertools.chain(*[label_to_triplet(p) for p in test_predicted]))
+
+    df["Predicted"] = list(itertools.chain(*[
+        [t[0] > 0.5, t[1] > 0.5, t[2] > 0.5] for t in zip(
+            test_predicted_gender,
+            test_predicted_age,
+            test_predicted_health
+        )]))
 
     prediction_path = os.path.join(
         CURRENT_DIRECTORY,
@@ -97,17 +139,6 @@ def label_to_triplet(l):
     return [l % 2 == 1, (l-l % 2) % 4 == 2, l > 4]
 
 
-# class PredictorMeanProbability:
-#     def __init__(self):
-#         pass
-#
-#     def fit(self, x, y):
-#         pass
-#
-#     def predict(self, x):
-#         return [0.75 for _ in range(0, len(x))]
-
-
 class PredictorWrapper:
     def __init__(self, predictorInstance):
         self.predictor = predictorInstance
@@ -117,44 +148,11 @@ class PredictorWrapper:
 
     def predict(self, *args, **kwargs):
         test_predicted = self.predictor.predict_proba(*args, **kwargs)
-        # max_index = test_predicted.index(max(test_predicted))
-        # print(test_predicted.shape)
-        # print(test_predicted)
-        # print("-"*100)
-        test_predicted = np.array([
+        test_predicted = [
             np.argmax(ps)
             for ps in test_predicted
-        ])
-        # print(test_predicted.shape)
-        # print(test_predicted)
-        # raise ""
-        # test_predicted = [1.0 if p > 0.95 else p for p in test_predicted]
+        ]
         return test_predicted
-
-
-# class PredictorWrapper2:
-#     def __init__(self, predictorInstance):
-#         self.predictor = predictorInstance
-#
-#     def fit(self, *args, **kwargs):
-#         self.predictor.fit(*args, **kwargs)
-#
-#     def predict(self, *args, **kwargs):
-#         test_predicted = self.predictor.predict_proba(*args, **kwargs)
-#         # print(test_predicted)
-#         test_predicted = [
-#             p[2] + p[3]
-#             for p in test_predicted
-#         ]
-#         test_predicted = [1.0 if p > 0.95 else p for p in test_predicted]
-#         # test_predicted = [0.75 if 0.5 < p < 0.9 else p for p in test_predicted]
-#         # test_predicted = [0.0 if p < 0.3 else p for p in test_predicted]
-#         return test_predicted
-
-
-def log_loss_custom(*args, **kwargs):
-    kwargs["labels"] = [0, 1, 2, 3, 4, 5, 6, 7]
-    return log_loss(*args, **kwargs)
 
 
 def cross_val_score_data(inputs, labels, bins):
@@ -166,8 +164,9 @@ def cross_val_score_data(inputs, labels, bins):
     """
 
     print("Extract features")
+    print(collections.Counter(labels))
 
-    # Make a histogram of 7 even bins for each brain scan
+    # Make a histogram of even bins for each brain scan
     inputs = extract_features_regions(inputs, bins)
 
     # Create the pipeline for a linear regression
@@ -184,12 +183,12 @@ def cross_val_score_data(inputs, labels, bins):
         predictor,
         inputs,
         labels,
-        scoring=make_scorer(accuracy_score),
+        scoring=make_scorer(hamming_loss),
         cv=4,
         n_jobs=4
     )
-    print(scores)
-    # print("Log Loss: %0.3f (+/- %0.3f)" % (scores.mean(), scores.std() * 2))
+    # print(scores)
+    print("Log Loss: %0.3f (+/- %0.3f)" % (scores.mean(), scores.std() * 2))
 
     # Fit the predictor with the training data for later use
     predictor.fit(inputs, labels)
