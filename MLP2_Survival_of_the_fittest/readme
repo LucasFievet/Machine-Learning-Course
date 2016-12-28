@@ -1,0 +1,16 @@
+lfievet@ethz.ch
+kkleber@student.ethz.ch
+oertela@student.ethz.ch
+
+Preprocessing
+None,None,None
+
+Features
+Flatten,Histogram,None
+
+Model
+Logisticregression,Crossvalidation,None
+
+Description
+"We didn't use any preprocessing techniques to achieve our score. For each brain scan we flattened the 3D array to a vector and created a histogram with 12 bins evenly spaced between the intensity values 10 and 2000.
+We then use a logistic classifier with a robust probability prediction to minimize the log-loss while using 4-fold CV to estimate the mean and variance of the log-loss."
